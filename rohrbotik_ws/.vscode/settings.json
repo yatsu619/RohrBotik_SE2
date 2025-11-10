@@ -1,0 +1,34 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/traffic_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/rotate_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/move_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/ldw_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/action_server_handler/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/build/turtlebot_action_server",
+        "/home/yatheesh/ros2_ws/install/turtlebot_action_server/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/build/my_robot_controller",
+        "/home/yatheesh/ros2_ws/install/my_robot_controller/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/install/goto_interfaces/local/lib/python3.10/dist-packages",
+        "/home/yatheesh/ros2_ws/build/controll_logic",
+        "/home/yatheesh/ros2_ws/install/controll_logic/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/traffic_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/rotate_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/move_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/ldw_server/lib/python3.10/site-packages",
+        "/home/yatheesh/Documents/rohrbotik_project/RohrBotik_SE2/rohrbotik_ws/install/action_server_handler/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/build/turtlebot_action_server",
+        "/home/yatheesh/ros2_ws/install/turtlebot_action_server/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/build/my_robot_controller",
+        "/home/yatheesh/ros2_ws/install/my_robot_controller/lib/python3.10/site-packages",
+        "/home/yatheesh/ros2_ws/install/goto_interfaces/local/lib/python3.10/dist-packages",
+        "/home/yatheesh/ros2_ws/build/controll_logic",
+        "/home/yatheesh/ros2_ws/install/controll_logic/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
