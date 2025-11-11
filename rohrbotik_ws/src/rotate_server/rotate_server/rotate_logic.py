@@ -14,17 +14,17 @@ class  Rotate :
         angle_diff = self.normalize_angle(angle_to_target - current_pose[2])
 
         if abs(angle_diff) < Rotate._angle_threshold:
-            return #self._rotate_more(current_pose)
+            return True
         
         return [0., Rotate._omega]
         
 
-   # def rotate_more(self,current_pose):# achtung rekursiv nur mit abbruch bedingung aufrufen 
-        new_angel=current_pose[2] + 79* math.pi / 180 
+    def rotate_more(self,current_pose):
+        new_angel=current_pose[2] + 79* math.pi / 180 # 79 ist eine primzahl das heißt in 5 umdrehungen sind wir einmal um den kreiß und weiter sso stellen wir sicher das wir mit der kamera auf jeden fall das rohr erkenn 
         angle_diff = self.normalize_angle(new_angel - current_pose[2])
 
         if abs(angle_diff) < Rotate._angle_threshold:
-            return self._rotate_more(current_pose)
+            return True
         
         return [0., Rotate._omega]
 
