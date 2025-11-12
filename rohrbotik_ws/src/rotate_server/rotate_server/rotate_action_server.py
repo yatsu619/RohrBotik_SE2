@@ -41,14 +41,15 @@ class rotate_server(Node):
 def main():
     count = 0
     current_pose = Pose2D(0.0, 0.0, 0.0)
+    cmd_actuell = Twist()
    
 # event handel start 
     if not kamera.seerohr() == True :# interface :)
         if count == 0:
-            rotate_logic.RotateCL500.rotate_to_pipe(current_pose)
+            cmd_actuell =  rotate_logic.RotateCL500.rotate_to_pipe(current_pose)
             count = 1
         else:
-            rotate_logic.RotateCL500.rotate_more(current_pose)
+            cmd_actuell =rotate_logic.RotateCL500.rotate_more(current_pose)
     else:
         # to do 
          # shut down implementiern 

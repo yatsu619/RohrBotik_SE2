@@ -14,7 +14,7 @@ class  RotateCL500 :# patrice idee 'CL500'
         angle_diff = self.normalize_angle(angle_to_target - current_pose[2])
 
         if abs(angle_diff) < RotateCL500._angle_threshold:
-            return True
+            return [0., 0.0]
         
         return [0., RotateCL500._omega]
         
@@ -24,7 +24,7 @@ class  RotateCL500 :# patrice idee 'CL500'
         angle_diff = self.normalize_angle(new_angel - current_pose[2])
 
         if abs(angle_diff) < RotateCL500._angle_threshold:
-            return True
+            return [0., 0.0]
         
         return [0., RotateCL500._omega]
 
