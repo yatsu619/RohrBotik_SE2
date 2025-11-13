@@ -1,5 +1,5 @@
-# Request (goal)
-geometry_msgs/Pose2D target_pose 
+# Request (goal) 
+bool one_direktion 
 ---
 
 # Result 
@@ -7,4 +7,4 @@ bool success
 ---
 
 #Feedback
-float32 ausgerichtet
+float32 start_winkel 
