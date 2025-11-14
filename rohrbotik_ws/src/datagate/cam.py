@@ -18,7 +18,7 @@ stop_it = False
 
 
 
-# ********************** Psydo-Code********************* 
+# ********************** Pseudo-Code********************* 
 
 """
 def "Bilder empfangen und Bereitstellen"
