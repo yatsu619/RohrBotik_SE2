@@ -8,7 +8,7 @@ import numpy as np
 
 
 # ********************* Variablen *********************  
-
+winkel_rohr =0 
 richtung_rohr = False
 mittig_im_Rohr = False
 stop_it = False
@@ -31,7 +31,10 @@ def "and_rutate"(wird von rotate_server angefordert)
 
 -> Bild von "Bild empfangen und Bereitstellen" einlesen
 -> prüfen, ob ein Aruco marker mit ID=0 (5x5 - 200) zu sehen ist. 
--Wenn NEIN-> gib rotate_server "bool kein_marker = True" zurück (rotate_action_server dreht weiter)
+-Wenn NEIN-> gib rotate_server "bool kein_marker = True" zurück (rotate_action_server dreht weiter)"""
+
+# bitte eigene funktion die den winkel zum mittel punkt gibt und brauchen wir im rotation server nicht 
+"""
 -Wenn JA ->  Rechne Winkel vom mittelpunkt der Kamera zum Mittelpunkt des ArUco Markers aus. Gib diesen WInkel an den Rotation server zurück. Dieser Rotiert dann um den Winkel. 
 [BONUS: Nach der ersten Fahrt, wird immer profisorisch einmal vor aufruf von and_rutate um 180 Grad gedreht]
 
@@ -50,7 +53,8 @@ def "stop_it" (wird von move_server abgefragt)
 -> Distanz zum End-Marker berechnen. 
 -> ist die Distanz kleiner als eine Vordefinierte Strecke (kurz vor dem Schild ist auch der "Stopp-Puntk"), dann soll per BOOL die Info an server übergeben werden und einen Stop auslösen. 
 [BONUS: Grundlegend war der Gedanke, dass übergeordnet der Bot IMMER stehen bleibt, sobald kein Aruco-marker bei der Linearfahrt mehr zu sehen ist. Das würde auch gleichzeitig einen Stop bei objekten die im Weg liegen ermöglichen]
-
+"""# du musst nur den bool liefern um die stop logic kümmer ich mich @johannes-wk
+"""
 
 (plathalter für die def "traffic" funktion
 Diese Funktion soll erkennen ob ein zweiter Roboter oder anderer gegenstand im Rohr im Weg steht und sofort stehen bleiben und nen Fehler werfen. 
