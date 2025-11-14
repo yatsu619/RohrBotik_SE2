@@ -39,12 +39,16 @@ class rotate_server(Node):
 
     def cancel_callback(self, goal_handle):
             return CancelResponse.ACCEPT
-       
+    """ hier die möglichkeit aufgrund der distanz zu untescheiden welcher arucomarker zum Abbruch führt """
+        #if cam.distanz_to_marker  :
+           # return CancelResponse.Reject 
+    
+
     
     
     def execute_callback(self, goal_handle):
         self.current_goal_handle = goal_handle
-        result = Rotate.Result()
+        result = rotate.Result()
 
         return result
 
@@ -56,7 +60,7 @@ class rotate_server(Node):
             self._cancel_goal('Client hat abgebrochen.')
             return
 
-        if cam.seerohr():
+        if cam.seerohr():# interface @Patrice115
             self._finish_goal('Seerohr erkannt breche Rotation ab.')
             return
 
