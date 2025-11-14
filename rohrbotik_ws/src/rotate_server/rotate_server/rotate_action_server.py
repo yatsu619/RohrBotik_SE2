@@ -9,7 +9,12 @@ import time
 import rotate_logic
 
 class rotate_server(Node):
+    ''' KLasse um den Roboter zu drehen '''
     def __init__(self):
+        ''' Beinhaltet action rotate 
+            Subscribet auf Pose2D 
+            Publischt auf Twist, cmd_vel 
+        '''
         super().__init__('rotate_server')
         self.current_pose = Pose2D(0.0, 0.0, 0.0)
         self.current_goal_handle = None
@@ -28,16 +33,19 @@ class rotate_server(Node):
         self.get_logger().info(' Rotate Action Server gestartet.')
       
     def goal_callback(self, goal_request):
+        """Dort wird das ziel ohne bedingung auf akzeptiern gesetzt """
         self.get_logger().info(' Neues Ziel empfangen!')
         return GoalResponse.ACCEPT  
 
     def pose_callback(self,msg:Pose2D):
+        ''' Integriert die Pose vom subscriber in die current_pose vom type Pose2D  '''
         self.current_pose.x=msg.x
         self.current_pose.y=msg.y
         self.current_pose.theta=msg.theta
         self.get_logger().info(f'Pose empfangen: x={msg.x}, y={msg.y}, theta={msg.theta}')
 
     def cancel_callback(self, goal_handle):
+            """Dort wird das ziel ohne bedingung abgebrochen vom client  """
             return CancelResponse.ACCEPT
     """ hier die möglichkeit aufgrund der distanz zu untescheiden welcher arucomarker zum Abbruch führt """
         #if cam.distanz_to_marker  :
@@ -47,12 +55,14 @@ class rotate_server(Node):
     
     
     def execute_callback(self, goal_handle):
+        '''Die Ausführende gewalt    '''
         self.current_goal_handle = goal_handle
         result = rotate.Result()
 
         return result
 
     def control_step(self):
+        ''' Hier ist die logic integiert der Timer rufft diese in 10Hz auf hier wird geprüft ob wir das rohr erkannt haben und hier wird gedreht  '''
         if self.current_goal_handle is None:
             return
 
@@ -77,6 +87,7 @@ class rotate_server(Node):
    
 
     def stop_motion(self):
+        ''' Stop ist Stop !! noch Fragen ?'''
         stop = Twist()
         self.cmd_pub.publish(stop)
 
