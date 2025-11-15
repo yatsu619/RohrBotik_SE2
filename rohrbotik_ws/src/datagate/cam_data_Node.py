@@ -9,7 +9,7 @@ from rclpy.node import Node
 class CameraOutPut(Node):
     def __init__(self):
         super().__init__('camera_read_out') #Node-bennenung
-        self.publisher = self.create_publisher(Image, 'versuchsstream', 10) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
+        self.publisher = self.create_publisher(Image, 'pycam_tb3', 10) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
         self.camera = cv.VideoCapture(4)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
         self.bridge = CvBridge()                                            #Hier, weil sonst die Kamera bei jedem def timer_callback aufgerufen werden würde
         self.timer = self.create_timer(1/24, self.timer_callback)
@@ -23,7 +23,12 @@ class CameraOutPut(Node):
         else:
             self.get_logger().info("Bild konnte nicht geladen werden!!")
 
-    
+
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+# *************************** Test Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
+
 def main(args=None):
     rclpy.init(args=args)
     camera_read_out = CameraOutPut()
