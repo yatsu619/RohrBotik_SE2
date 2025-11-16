@@ -15,7 +15,7 @@ class Pic_sub(Node):
         self.bridge = CvBridge()
         self.subscription = self.create_subscription(
             Image,
-            'versuchsstream',
+            'pycam_tb3',
             self.listener_callback,
             10
         )

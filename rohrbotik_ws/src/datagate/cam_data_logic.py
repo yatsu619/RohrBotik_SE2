@@ -13,17 +13,6 @@ from cam_data_Node import CameraOutPut
 import cv2.aruco as aruco
 
 
-# ********************* Variablen *********************  
-winkel_rohr =0 
-richtung_rohr = False
-mittig_im_Rohr = False
-stop_it = False
-
-
-# ********************** Funktionen (Aufruf in benötigten Servern) ********************* 
-
-
-
 # ********************** Pseudo-Code********************* 
 
 """
@@ -79,16 +68,15 @@ class Camera_data(Node):
             self.frame_callback,
             10
         )
-        self.vision = VisionProcessor()                     # Hier erstelle ich das Objekt VisionProcessor,um dort die Variable frame zu übergeben.
+        self.vipr = VisionProcessor()                     # Hier erstelle ich das Objekt VisionProcessor,um dort die Variable frame zu übergeben.
         
     def frame_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         if frame is not None:
-            self.vision.videoframe(frame)
- #          self.vision.zeige_test_bild()                  --> Für einen test
+            self.vipr.videoframe(frame)
 
         else:
-            self.get_logger().info("Da knallts gewaltig")
+            self.get_logger().info("Da knallts bei der Cam gewaltig")
 
 
 
@@ -97,6 +85,9 @@ class Camera_data(Node):
 
 class VisionProcessor:
     def __init__(self):
+        """
+        Wichtig, je nach eingestellter Kamera müssen hier die Werte für die Kamera-Konstanten geändert werden!!!
+        """
         self.check_grayframe = None
         self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
         self.aruco_params = aruco.DetectorParameters()
@@ -108,10 +99,16 @@ class VisionProcessor:
         self.marker_mittelpunkt = None #(mit x,y)
         self.marker_distanz = None
         self.marker_groesse_pixel = None
+        self.marker_winkel = None
 
-#Konstanten
-        self.MARKER_GROESSE_CM = 10 #!!!! Platzahalter, hier echte Größe einfügen TODO 
-        self.KAMERA_BRENNWEITE = 500 #!!!! Kalibrieren TODO in Pixel 
+#Konstanten der Rasberry Py Camera REV 1.3 // Sensor OmniVision OV5647
+
+        self.MARKER_GROESSE_CM = 10         #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
+        self.KAMERA_BRENNWEITE = 600        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
+
+        self.KAMERA_Breite_Pixel = 640      #TODO:  Oder je nach Einstellung 1280 oder 1920
+        self.KAMERA_Hoehe_Pixel = 480       #TODO:  Oder je nach Einstellung 720 oder 1080
+        self.KAMERA_Sichtfeld_GRAD = 53.5   #TODO:  53.5 -> bei 640x480 // 62.2 -> 1280x720 // 62.2 -> 1920x1080 
 
 
     def videoframe(self, color_frame):
@@ -148,6 +145,7 @@ class VisionProcessor:
         self.marker_id = None
         self.marker_mittelpunkt = None
         self.marker_distanz = None          # in Metern
+        self.marker_winkel = None           # in Grad
 
         if self.check_grayframe is None:
             return False 
@@ -166,9 +164,11 @@ class VisionProcessor:
                 ecken = corners[i][0]                           # durch das [0] schneiden wir eine Dimension des Arrays weg [[[2,1], [2,4]]] --> [[20,23], [24,20]]
                 self.marker_mittelpunkt = (
                     np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
-                    np.mean(ecken[:,1])         #y
+                    np.mean(ecken[:,1])         #y                
                 )
 
+                self.marker_winkel = self._berechne_winkel()    
+            
                 breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() --> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
                 hoehe = np.linalg.norm(ecken[1] - ecken[2])
                 self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
@@ -180,27 +180,31 @@ class VisionProcessor:
         return False
     
 
+# def horizontal_distanz_crossair2ArUco (--> dafür da um den winkel zwischen Marker_mittelpunkt und ArUcomarkermittelpunkt zu berechnen)  --> wird vermutlich schon in find_marker gemacht
+    def _berechne_winkel(self):
+        """
+        Berechnung des Winkels zwischen dem Bildmittelpunkt und dem Mittepunkt des ArUco-Markers
 
-"""  Test ob grau bild ankommt 
+        Logik: 
+            Pixel_abweichung = Anzahld er Pixel zwischen Bildmittelpunkt und Mitte-ArUco-Marker
+            Grad_pro_Pixel = Rechnet aus dem Winkel der Linse und der Bildbreite in Pixeln die Gradzahl für ein Pixel aus
+            Winkel in Grad = Abweichung in Pixeln mal Grad pro Pixel 
+        """
+        marker_x = self.marker_mittelpunkt[0]
+        bild_mitte_x = self.KAMERA_Breite_Pixel / 2
 
-    def zeige_test_bild(self):
-        if self.check_grayframe is not None:
-            cv.imshow("VisionProcessor - Graustufen", self.check_grayframe)
-            cv.waitKey(1)
-        else:
-            print("Kein Frame in VisionProcessor vorhanden!")
-"""
-    
+        pixel_abweichung_x = bild_mitte_x - marker_x
 
-#   def horizontal_distanz_crossair2ArUco (--> dafür da um den winkel zwischen Marker_mittelpunkt und ArUcomarkermittelpunkt zu berechnen)
+        grad_pro_pixel = self.KAMERA_Sichtfeld_GRAD / self.KAMERA_Breite_Pixel
+        winkel_grad = pixel_abweichung_x * grad_pro_pixel
 
 
 
-#   def rotation (brauchen wir hier eigentlich nicht)
+
+
+# def rotation (brauchen wir hier eigentlich nicht)
 
 #   def linear fahrt (brauchen wir hier eigentlich nicht)
-
-
 
 
 
@@ -214,14 +218,14 @@ def main(args=None):
     
     # Timer für regelmäßigen Test
     def test_marker_erkennung():
-        gefunden = Camera_data_sub.vision.find_ArUco(114)  # Suche Marker ID=0
+        gefunden = Camera_data_sub.vipr.find_ArUco(114) 
         
         if gefunden:
             print(f"✓ Marker gefunden!")
-            print(f"  ID: {Camera_data_sub.vision.marker_id}")
-            print(f"  Mittelpunkt: {Camera_data_sub.vision.marker_mittelpunkt}")
-            print(f"  Distanz: {Camera_data_sub.vision.marker_distanz:.2f}m")
-            print(f"  Kantenlänge: {Camera_data_sub.vision.marker_kantenlaenge_pixel:.1f}px")
+            print(f"  ID: {Camera_data_sub.vipr.marker_id}")
+            print(f"  Mittelpunkt: {Camera_data_sub.vipr.marker_mittelpunkt}")
+            print(f"  Distanz: {Camera_data_sub.vipr.marker_distanz:.2f}m")
+            print(f"  Kantenlänge: {Camera_data_sub.vipr.marker_kantenlaenge_pixel:.1f}px")
         else:
             print("✗ Kein Marker erkannt")
     
