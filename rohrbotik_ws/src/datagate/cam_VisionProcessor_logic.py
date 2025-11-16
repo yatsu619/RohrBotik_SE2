@@ -8,14 +8,14 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-
-from cam_data_Node import CameraOutPut
 import cv2.aruco as aruco
 
 
 # ********************** Pseudo-Code********************* 
 
 """
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Nötige Bausteine des Codes @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 <<<<<<<<<<<<<<<<<<<<<< DONE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def "Bilder empfangen und Bereitstellen"
 -> Empfangen der Kamera bilder über ROS2 - Camera-Node
@@ -25,60 +25,32 @@ def "Bilder empfangen und Bereitstellen"
 <<<<<<<<<<<<<<<<<<<<<< DONE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-def "and_rutate"(wird von rotate_server angefordert)
-
-Diese Funktion per se benötigt es hier nicht wirklich... die funktionalität den marker mit distanz und id zu erkennen reicht, um zu drehen und stehen zu bleiben. 
-Allerdings kann man die Berechnung des Winkels dennoch als eigene Funtion noch mit implementieren, wenn der Bot zu weit über das Ziel hinausdreht und man den Marker aber immer noch sieht
-
----- Ab hier muss noch überdacht werden ------
-def "linear_regelung"(wird von move_server angefordert)
-
--> Bild von "Bild empfangen und Bereitstellen" einlesen.
--> ArUco-Marker am Ende des Tunnels (platziert am Ende der Strecke) erkennen und anvisieren. 
--> Der Marker soll dann immer in der Mitte des bildes sein. Wenn nicht, muss die Abweichung per Winkel berechnet und in Grad an den move_server logic py übergeben werden. 
---> der Move_server frägt das alle paar cm ab. Wenn eine zu große Abweichung entsteht muss Move_server per ODOM um den berechneten winkel (abweichung) gegenlenken. 
+def "and_rutate"(wird von rotate_server erledigt, nicht in cam_logik vertreten) 
 
 
-def "stop_it" (wird von move_server abgefragt)
--> Bild von "Bild empfangen und Bereitstellen" einlesen.
--> ArUco-Marker am Ende des Tunnels (platziert am Ende der Strecke) erkennen und anvisieren.
--> Distanz zum End-Marker berechnen. 
--> ist die Distanz kleiner als eine Vordefinierte Strecke (kurz vor dem Schild ist auch der "Stopp-Puntk"), dann soll per BOOL die Info an server übergeben werden und einen Stop auslösen. 
-[BONUS: Grundlegend war der Gedanke, dass übergeordnet der Bot IMMER stehen bleibt, sobald kein Aruco-marker bei der Linearfahrt mehr zu sehen ist. Das würde auch gleichzeitig einen Stop bei objekten die im Weg liegen ermöglichen]
-"""# du musst nur den bool liefern um die stop logic kümmer ich mich @johannes-wk
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Classen Vererbung für VisionProcessor @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+Ebene 1: VisionProcessor        (importiert: cv2, numpy, aruco)
+              ↑
+Ebene 2: VisionManager          (importiert: VisionProcessor)
+              ↑
+Ebene 3: Camera_data Node       (importiert: VisionManager)
+Ebene 3: Rotate Action Server   (importiert: VisionManager)
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Anwenden der Funktionen im VisionProcessor in den Actionservern @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+1. Import: 
+    >>> from cam_vision_manager import VisionManager
+2. Vision-Instanz als Classen-Variable herholen:
+    >>> self.vision = VisionManager.get_instance()
+3. Aufrufen der Funktion:
+    >>> marker_gefunden = self.vision.find_ArUco(0)  # Die 0 ist für die Marker-ID: 0 
+4. Infos der Funktion Nutzen / Abrufen: 
+    >>> winkel = self.vision.marker_winkel    ODER   distanz = self.vision.marker_distanz
+    
+
 """
-
-(plathalter für die def "traffic" funktion
-Diese Funktion soll erkennen ob ein zweiter Roboter oder anderer gegenstand im Rohr im Weg steht und sofort stehen bleiben und nen Fehler werfen. 
-Alternative soll er einen anderen Roboter mit Aruco marker sehen und ihm hinterher fahren. ) 
---> Aber das kommt erst später, daher jetzt noch nicht relevant. 
-"""
-
-# ********************** Main-Code********************* 
-
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ROS2 - Subscriber_cam @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-class Camera_data(Node):
-    def __init__(self):
-        super().__init__('cam_data_sub')
-        self.bridge = CvBridge()
-        self.subscription = self.create_subscription(
-            Image,
-            'pycam_tb3',
-            self.frame_callback,
-            10
-        )
-        self.vipr = VisionProcessor()                     # Hier erstelle ich das Objekt VisionProcessor,um dort die Variable frame zu übergeben.
-        
-    def frame_callback(self, msg):
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        if frame is not None:
-            self.vipr.videoframe(frame)
-
-        else:
-            self.get_logger().info("Da knallts bei der Cam gewaltig")
-
-
 
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ cam_data_logic.py only @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -111,8 +83,13 @@ class VisionProcessor:
         self.KAMERA_Sichtfeld_GRAD = 53.5   #TODO:  53.5 -> bei 640x480 // 62.2 -> 1280x720 // 62.2 -> 1920x1080 
 
 
+
+
     def videoframe(self, color_frame):
         self.check_grayframe = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)                  # Für besseres Erkennen der ArUco marker, wird das bild in Graustufen unterteilt
+
+
+
 
     def find_ArUco(self, wanted_id):
         """
@@ -212,33 +189,6 @@ class VisionProcessor:
 
 # *************************** Test Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
 
-def main(args=None):
-    rclpy.init(args=args)
-    Camera_data_sub = Camera_data()
-    
-    # Timer für regelmäßigen Test
-    def test_marker_erkennung():
-        gefunden = Camera_data_sub.vipr.find_ArUco(114) 
-        
-        if gefunden:
-            print(f"✓ Marker gefunden!")
-            print(f"  ID: {Camera_data_sub.vipr.marker_id}")
-            print(f"  Mittelpunkt: {Camera_data_sub.vipr.marker_mittelpunkt}")
-            print(f"  Distanz: {Camera_data_sub.vipr.marker_distanz:.2f}m")
-            print(f"  Kantenlänge: {Camera_data_sub.vipr.marker_kantenlaenge_pixel:.1f}px")
-        else:
-            print("✗ Kein Marker erkannt")
-    
-    # Alle 0.5 Sekunden testen
-    timer = Camera_data_sub.create_timer(0.5, test_marker_erkennung)
-    
-    try:
-        rclpy.spin(Camera_data_sub)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        Camera_data_sub.destroy_node()
-        rclpy.shutdown()
 
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+#    main()
