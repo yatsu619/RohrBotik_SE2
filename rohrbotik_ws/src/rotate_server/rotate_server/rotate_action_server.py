@@ -4,9 +4,10 @@ from rclpy.action import ActionServer, GoalResponse, CancelResponse
 from rclpy.node import Node
 from rclpy.action import ActionServer
 from geometry_msgs.msg import Pose2D, Twist
-from datagate import cam
 import time
 import rotate_logic
+from datagate.cam_vision_manager import VisionManager
+
 
 class rotate_server(Node):
     ''' KLasse um den Roboter zu drehen '''
@@ -15,10 +16,11 @@ class rotate_server(Node):
             Subscribet auf Pose2D 
             Publischt auf Twist, cmd_vel 
         '''
-        super().__init__('rotate_server')
+        super().__init__('rotate_server_node')
         self.current_pose = Pose2D(0.0, 0.0, 0.0)
         self.current_goal_handle = None
         self.count = 0
+        self.visionprocessor = VisionManager.get_instance()                             # Hierrüber lassen sich alle Funktionen des VP mit z.B. marker_gefunden = self.visionprocessor.find_ArUco(0) aufrufen
 
         self.control_timer = self.create_timer(0.1, self.control_step)
 
@@ -70,7 +72,7 @@ class rotate_server(Node):
             self._cancel_goal('Client hat abgebrochen.')
             return
 
-        if cam.seerohr():# interface @Patrice115
+        if self.visionprocessor.find_ArUco(0):# interface @Patrice115 
             self._finish_goal('Seerohr erkannt breche Rotation ab.')
             return
 
@@ -94,20 +96,28 @@ class rotate_server(Node):
 
  
 
-
-
 def main():
-
+    rclpy.init()  
     try:
-        pass # to do !!!
+        # Node laufen lassen - blockiert hier bis Ctrl+C gedrückt wird
+        rclpy.spin()
+        
     except KeyboardInterrupt:
-        node.get_logger().info(' Server wird beendet...')
-    finally:
-        self.stop_motion()
-        executor.shutdown()
-        node.destroy_node()
-        rclpy.shutdown()
+        # Wenn Benutzer Ctrl+C drückt
+        rotate_server.get_logger().info('Server durch Benutzer unterbrochen...')
 
+    except Exception as e:
+        # Falls irgendein anderer Fehler auftritt
+        rotate_server.get_logger().error(f'Unerwarteter Fehler: {e}')
+        
+    finally:
+        rotate_server.get_logger().info('Server wird beendet...')
+        rotate_server.stop_motion()  # Roboter stoppen
+        rotate_server.destroy_node()  
+        rclpy.shutdown() 
+
+if __name__ == '__main__':
+    main()
 
 
 

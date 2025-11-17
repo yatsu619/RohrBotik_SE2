@@ -11,7 +11,7 @@ from cv_bridge import CvBridge
 import cv2.aruco as aruco
 
 
-# ********************** Pseudo-Code********************* 
+# **********************Code und Logic Beschreibung ********************* 
 
 """
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Nötige Bausteine des Codes @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -48,7 +48,7 @@ Ebene 3: Rotate Action Server   (importiert: VisionManager)
     >>> marker_gefunden = self.vision.find_ArUco(0)  # Die 0 ist für die Marker-ID: 0 
 4. Infos der Funktion Nutzen / Abrufen: 
     >>> winkel = self.vision.marker_winkel    ODER   distanz = self.vision.marker_distanz
-    
+
 
 """
 
@@ -85,7 +85,7 @@ class VisionProcessor:
 
 
 
-    def videoframe(self, color_frame):
+    def videoframe(self, color_frame):                                                      # Wird im Subscriber.Node aufgrufen.
         self.check_grayframe = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)                  # Für besseres Erkennen der ArUco marker, wird das bild in Graustufen unterteilt
 
 
@@ -116,6 +116,8 @@ class VisionProcessor:
             ▼
             Y (Höhe)
 
+            
+        Alter
         """
 #Resett für erneuten Aufruf der Funktion
         self.marker_gefunden = False
@@ -175,6 +177,7 @@ class VisionProcessor:
         grad_pro_pixel = self.KAMERA_Sichtfeld_GRAD / self.KAMERA_Breite_Pixel
         winkel_grad = pixel_abweichung_x * grad_pro_pixel
 
+        return winkel_grad
 
 
 
