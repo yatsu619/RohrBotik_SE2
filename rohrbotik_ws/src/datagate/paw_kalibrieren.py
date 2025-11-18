@@ -66,7 +66,7 @@ class KameraKalibrierer:
         # Formel: Brennweite = (Pixel_Größe × Distanz) / Echte_Größe
         brennweite = (pixel_groesse * BEKANNTE_DISTANZ_CM) / MARKER_GROESSE_CM
         return brennweite
-    
+     
     def run(self):
         """Hauptschleife"""
         
