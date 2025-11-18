@@ -29,7 +29,7 @@ AUFLOESUNG = (640, 480)          # Oder (1280, 720) oder (1920, 1080)
 class KameraKalibrierer:
     def __init__(self):
         # Kamera öffnen
-        self.camera = cv.VideoCapture(4)
+        self.camera = cv.VideoCapture(0)
         self.camera.set(cv.CAP_PROP_FRAME_WIDTH, AUFLOESUNG[0])
         self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, AUFLOESUNG[1])
         

@@ -75,8 +75,8 @@ class VisionProcessor:
 
 #Konstanten der Rasberry Py Camera REV 1.3 // Sensor OmniVision OV5647
 
-        self.MARKER_GROESSE_CM = 10         #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
-        self.KAMERA_BRENNWEITE = 600        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
+        self.MARKER_GROESSE_CM = 17.5         #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
+        self.KAMERA_BRENNWEITE = 618        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
 
         self.KAMERA_Breite_Pixel = 640      #TODO:  Oder je nach Einstellung 1280 oder 1920
         self.KAMERA_Hoehe_Pixel = 480       #TODO:  Oder je nach Einstellung 720 oder 1080
@@ -97,27 +97,47 @@ class VisionProcessor:
 
         Prüft alle Marker im Bild und speichert dann gewisse Daten des "wanted-id" - Markers
 
-        -> Strucktur von detectMarkers(corners):
+ @@@@@@@@@@ -> Koordinatensystem des Frames:   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-        corners                     # Liste aller gefundenen Marker
-            ├─ corners[0]           # Erster Marker (nochmal verschachtelt wegen OpenCV-Format)
-            │   └─ corners[0][0]    # Die 4 Ecken als Array [[x,y], [x,y], [x,y], [x,y]]
-            ├─ corners[1]           # Zweiter Marker
-            │   └─ corners[1][0]
-            └─ ..
+                (0,0) ──────────────────────────────► X
+                │
+                │         Ecke 1 ●────────● Ecke 2
+                │               │  ArUco  │
+                │               │ Marker  │
+                │         Ecke 4 ●────────● Ecke 3
+                │
+                ▼ Y
+        
+@@@@@@@@@@@ -> Strucktur von detectMarkers(corners):   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        
+        corners[i]       # Marker Nummer i (z.B. der erste Marker)
+        corners[i][0]    # Die Ecken dieses Markers (wir schneiden eine Dimension weg)
+        corners[i][0][0] # Die erste Ecke (oben links)
 
-        -> Koordinatensystem des Frames:
 
-        (0,0) ────────────────────► X (Breite)
-            │
-            │    Hier ist dein Bild
-            │   Startet OBEN LINKS
-            │  
-            ▼
-            Y (Höhe)
+                    corners = [
+                # Erster Marker (z.B. ID 0)
+                [
+                    [  # Diese extra Klammer kommt von OpenCV's Format
+                        [200, 80],   # Ecke 1 (oben links)    → X=200, Y=80
+                        [250, 80],   # Ecke 2 (oben rechts)   → X=250, Y=80
+                        [250, 130],  # Ecke 3 (unten rechts)  → X=250, Y=130
+                        [200, 130]   # Ecke 4 (unten links)   → X=200, Y=130
+                    ]
+                ],
+                # Zweiter Marker (z.B. ID 5)
+                [
+                    [
+                        [100, 200],
+                        [150, 200],
+                        [150, 250],
+                        [100, 250]
+                    ]
+                ]
+            ]
 
-            
-        Alter
+            ids = [[0], [5]]  # IDs der gefundenen Marker
+                    
         """
 #Resett für erneuten Aufruf der Funktion
         self.marker_gefunden = False
@@ -141,6 +161,7 @@ class VisionProcessor:
                 self.marker_id = int(detected_id)
                 
                 ecken = corners[i][0]                           # durch das [0] schneiden wir eine Dimension des Arrays weg [[[2,1], [2,4]]] --> [[20,23], [24,20]]
+                
                 self.marker_mittelpunkt = (
                     np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
                     np.mean(ecken[:,1])         #y                
@@ -148,7 +169,7 @@ class VisionProcessor:
 
                 self.marker_winkel = self._berechne_winkel()    
             
-                breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() --> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
+                breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
                 hoehe = np.linalg.norm(ecken[1] - ecken[2])
                 self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
 
@@ -179,7 +200,7 @@ class VisionProcessor:
 
         return winkel_grad
 
-
+# VSP = VisionProcessor() --> Alternativ zum Manager, kann ich auch innerhalb der klasse einfach eine einzelne Instanz aufrufen und diese per Variable an andere Dateien übergeben.
 
 
 # def rotation (brauchen wir hier eigentlich nicht)
