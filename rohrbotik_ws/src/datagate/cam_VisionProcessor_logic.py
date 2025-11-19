@@ -8,7 +8,6 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-import cv2.aruco as aruco
 
 
 # **********************Code und Logic Beschreibung ********************* 
@@ -85,10 +84,11 @@ class VisionProcessor:
 
 
 
-    def videoframe(self, color_frame):                                                      # Wird im Subscriber.Node aufgrufen.
-        self.check_grayframe = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)                  # Für besseres Erkennen der ArUco marker, wird das bild in Graustufen unterteilt
+    def videoframe(self, gray_frame):                                                      # Wird im Subscriber.Node aufgrufen.
+        self.check_grayframe = gray_frame              
 
-
+    def showImg(self):
+        return self.check_grayframe
 
 
     def find_ArUco(self, wanted_id):
@@ -102,8 +102,8 @@ class VisionProcessor:
                 (0,0) ──────────────────────────────► X
                 │
                 │         Ecke 1 ●────────● Ecke 2
-                │               │  ArUco  │
-                │               │ Marker  │
+                │                │ ArUco  │
+                │                │ Marker │
                 │         Ecke 4 ●────────● Ecke 3
                 │
                 ▼ Y
@@ -156,6 +156,7 @@ class VisionProcessor:
         
 #suche   
         for i, detected_id in enumerate(ids.flatten()):
+            print(f"Gefundene Marker: {detected_id}")
             if detected_id == wanted_id:
                 self.marker_gefunden = True
                 self.marker_id = int(detected_id)
@@ -214,5 +215,4 @@ class VisionProcessor:
 # *************************** Test Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
 
 
-#if __name__ == '__main__':
-#    main()
+

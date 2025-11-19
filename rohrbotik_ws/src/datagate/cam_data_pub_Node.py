@@ -12,14 +12,15 @@ class CameraOutPut(Node):
     def __init__(self):
         super().__init__('camera_read_out') #Node-bennenung
         self.publisher = self.create_publisher(Image, 'pycam_tb3', 10) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
-        self.camera = cv.VideoCapture(4)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
+        self.camera = cv.VideoCapture(0)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
         self.bridge = CvBridge()                                            #Hier, weil sonst die Kamera bei jedem def timer_callback aufgerufen werden würde
         self.timer = self.create_timer(1/24, self.timer_callback)
 
     def timer_callback(self):
         succsess, frame = self.camera.read()
         if succsess: 
-            msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
+            frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            msg = self.bridge.cv2_to_imgmsg(frame_gray, encoding='mono8')
             self.publisher.publish(msg)
             self.get_logger().info("Bild wird verschickt... ")
         else:
