@@ -97,7 +97,7 @@ class rotate_action_server(Node):
             return
         
 
-        if self.visionprocessor.find_ArUco(0):# interface @Patrice115 
+        if self.visionprocessor.find_ArUco(114):# interface @Patrice115 
             self.rotation_active = False
             self.stop_motion()
             self.get_logger().info('Seerohr erkannt breche Rotation ab')
