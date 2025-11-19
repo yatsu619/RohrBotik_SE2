@@ -1,13 +1,9 @@
 
 # ********************** Imports ********************* 
 
-import cv2 as cv 
+import cv2 as cv
 import cv2.aruco as aruco
 import numpy as np 
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 
 
 # **********************Code und Logic Beschreibung ********************* 

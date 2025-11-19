@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rotate_server'
+package_name = 'datagates'
 
 setup(
     name=package_name,
@@ -13,10 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='yatheesh',
-    maintainer_email='yatheesh@todo.todo',
+    maintainer='pa99',
+    maintainer_email='patrice.wenzig@stud.hs-kempten.de',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='MIT',
     extras_require={
         'test': [
             'pytest',
@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'setup_rotate_server = rotate_server.rotate_action_server:main'
+            'setup_datagate_pub = datagate.cam_data_pub_Node:main',
+            'setup_datagate_sub = datagate.cam_data_sub_Node:main'
         ],
     },
 )
