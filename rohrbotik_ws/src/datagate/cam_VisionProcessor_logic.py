@@ -75,7 +75,7 @@ class VisionProcessor:
 
 #Konstanten der Rasberry Py Camera REV 1.3 // Sensor OmniVision OV5647
 
-        self.MARKER_GROESSE_CM = 17.5         #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
+        self.MARKER_GROESSE_CM = 17.5       #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
         self.KAMERA_BRENNWEITE = 618        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
 
         self.KAMERA_Breite_Pixel = 640      #TODO:  Oder je nach Einstellung 1280 oder 1920
@@ -160,7 +160,7 @@ class VisionProcessor:
                 self.marker_gefunden = True
                 self.marker_id = int(detected_id)
                 
-                ecken = corners[i][0]                           # durch das [0] schneiden wir eine Dimension des Arrays weg [[[2,1], [2,4]]] --> [[20,23], [24,20]]
+                ecken = corners[i][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
                 
                 self.marker_mittelpunkt = (
                     np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse

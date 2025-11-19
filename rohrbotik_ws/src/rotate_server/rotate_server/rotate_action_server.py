@@ -72,8 +72,9 @@ class rotate_server(Node):
             self._cancel_goal('Client hat abgebrochen.')
             return
 
-        if self.visionprocessor.find_ArUco(0):# interface @Patrice115 
+        if self.visionprocessor.find_ArUco(0):      # interface @Patrice115 
             self._finish_goal('Seerohr erkannt breche Rotation ab.')
+            
             return
 
     
