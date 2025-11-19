@@ -16,6 +16,8 @@ class rotate_action_server(Node):
             Subscribet auf Pose2D 
             Publischt auf Twist, cmd_vel 
         '''
+        rotate_logic.RotateCL500.__init__()
+
         super().__init__('rotate_server_node')
         self.current_pose = Pose2D(0.0, 0.0, 0.0)
         self.current_goal_handle = None
