@@ -1,5 +1,5 @@
 import rclpy
-from interfaces.action import Rotate 
+from interfaces.action import RotateAc 
 from rclpy.action import ActionServer, GoalResponse, CancelResponse
 from rclpy.node import Node
 from rclpy.action import ActionServer
@@ -26,8 +26,9 @@ class rotate_action_server(Node):
         self.rotation_active = False
 
         self.control_timer = self.create_timer(0.1, self.control_step)
+        self.inner_counter = 0
 
-        self._action_server = ActionServer ( self, Rotate,'rotate',         
+        self._action_server = ActionServer ( self, RotateAc,'rotate',         
                                                 self.execute_callback,          
                                                 goal_callback=self.goal_callback,        # optional: neue Ziele akzeptieren
                                                 cancel_callback=self.cancel_callback,    # optional: Abbrüche akzeptieren
@@ -64,15 +65,20 @@ class rotate_action_server(Node):
         '''Die Ausführende gewalt    '''
         self.current_goal_handle = goal_handle
         self.rotation_active = True
-        one_direction = goal_handle.request.one_direction
-        self.get_logger().info(f"Starte Rotation-Goal: {one_direction}")
+        #one_direction = goal_handle.request.one_direction
+        self.get_logger().info(f"Starte Rotation-Goal: {self.count}")
+
+        feedback_msg = RotateAc.Feedback()
+        feedback_msg.start_winkel = self.current_pose.theta
+        goal_handle.publish_feedback(feedback_msg)
         
 
         while self.rotation_active and rclpy.ok():
             '''rclpy.ok() ist eine Hilfsfunktion die prüft, ob das ros-System noch läuft und die Node weiter machen soll'''
             time.sleep(0.1)
 
-        result = Rotate.Result()
+        result = RotateAc.Result()
+        result.success = True
         goal_handle.succeed()
         self.get_logger().info('Rotation abgeschlossen')
         self.current_goal_handle = None
@@ -98,13 +104,32 @@ class rotate_action_server(Node):
             #self._finish_goal('Seerohr erkannt breche Rotation ab.')
             return
 
-        cmd_actuell = Twist()
+        
+
         if self.count == 0:
-            cmd_actuell = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose)
-            self.count = 1
+            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose, self.inner_counter)
+            self.inner_counter += 1 
+            if gedreht_janein == True: 
+                self.count == 1
+                self.inner_counter = 0
+
         else:
-            cmd_actuell = rotate_logic.RotateCL500.rotate_more(self.current_pose)
-        self.cmd_pub.publish(cmd_actuell)
+            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_more(self.current_pose, self.inner_counter)
+            self.inner_counter += 1
+            if gedreht_janein == True:
+                if self.count == 10:
+                    self.stop_motion
+                    self.get_logger().info('2 volle Umdrehungen, Rohr nicht gefunden!')
+                    return
+                else:
+                    self.count += 1
+                self.inner_counter = 0
+        
+
+        cmd_aktuell = Twist()
+        cmd_aktuell.linear.x = linear_vel
+        cmd_aktuell.angular.z = angular_vel
+        self.cmd_pub.publish(cmd_aktuell)
 
     def stop_motion(self):
         ''' Stop ist Stop !! noch Fragen ?'''
