@@ -16,9 +16,9 @@ class  RotateCL500 :# patrice idee 'CL500'
         angle_diff = self.normalize_angle(angle_to_target - current_pose[2])
 
         if abs(angle_diff) < RotateCL500._angle_threshold:
-            return [0., 0.0]
+            return 0., 0.0
         
-        return [0., RotateCL500._omega]
+        return 0., RotateCL500._omega
         
 
     def rotate_more(self,current_pose):
@@ -29,10 +29,9 @@ class  RotateCL500 :# patrice idee 'CL500'
         angle_diff = self.normalize_angle(new_angel - current_pose[2])
 
         if abs(angle_diff) < RotateCL500._angle_threshold:
-            return [0., 0.0]
+            return 0., 0.0
         ''' Sorgt dafür das nur positive Zahlen genommen werden abs() und ermöglicht so einen einfachen vergleich '''
-        return [0., RotateCL500._omega]
-
+        return 0., RotateCL500._omega
     def normalize_angle(angle):
         ''' Sorg dafür das der Winkel im bereich von - pi bis pi liegt '''
 

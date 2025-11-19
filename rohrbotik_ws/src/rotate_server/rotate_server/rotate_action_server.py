@@ -60,11 +60,14 @@ class rotate_action_server(Node):
     
     def execute_callback(self, goal_handle):
         '''Die Ausführende gewalt    '''
-        self.get_logger().info(f"Starte Rotation-Goal: {goal_handle.request}")
         self.current_goal_handle = goal_handle
         self.rotation_active = True
+        one_direction = goal_handle.request.one_direction
+        self.get_logger().info(f"Starte Rotation-Goal: {one_direction}")
+        
 
         while self.rotation_active and rclpy.ok():
+            '''rclpy.ok() ist eine Hilfsfunktion die prüft, ob das ros-System noch läuft und die Node weiter machen soll'''
             time.sleep(0.1)
 
         result = Rotate.Result()
@@ -84,6 +87,7 @@ class rotate_action_server(Node):
             self.get_logger().info('Cancel-Flag erkannt: Drehen gestoppt')
             #self._cancel_goal('Client hat abgebrochen.')
             return
+        
 
         if self.visionprocessor.find_ArUco(0):# interface @Patrice115 
             self.rotation_active = False
@@ -92,7 +96,6 @@ class rotate_action_server(Node):
             #self._finish_goal('Seerohr erkannt breche Rotation ab.')
             return
 
-    
         cmd_actuell = Twist()
         if self.count == 0:
             cmd_actuell = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose)
@@ -100,9 +103,6 @@ class rotate_action_server(Node):
         else:
             cmd_actuell = rotate_logic.RotateCL500.rotate_more(self.current_pose)
         self.cmd_pub.publish(cmd_actuell)
-
-
-   
 
     def stop_motion(self):
         ''' Stop ist Stop !! noch Fragen ?'''
