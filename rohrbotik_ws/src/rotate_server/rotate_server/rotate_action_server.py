@@ -45,9 +45,12 @@ class rotate_action_server(Node):
 
     def pose_callback(self,msg:Pose2D):
         ''' Integriert die Pose vom subscriber in die current_pose vom type Pose2D  '''
-        self.current_pose.x=msg.x
-        self.current_pose.y=msg.y
-        self.current_pose.theta=msg.theta
+        self.current_pose = Pose2D(x=msg.x, y=msg.y, theta=msg.theta)
+
+
+        #self.current_pose.x=msg.x
+        #self.current_pose.y=msg.y
+        #self.current_pose.theta=msg.theta
         self.get_logger().info(f'Pose empfangen: x={msg.x}, y={msg.y}, theta={msg.theta}')
 
     def cancel_callback(self, goal_handle):
@@ -107,14 +110,14 @@ class rotate_action_server(Node):
         
 
         if self.count == 0:
-            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose, self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter)
             self.inner_counter += 1 
             if gedreht_janein == True: 
                 self.count == 1
                 self.inner_counter = 0
 
         else:
-            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_more(self.current_pose, self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter)
             self.inner_counter += 1
             if gedreht_janein == True:
                 if self.count == 10:
