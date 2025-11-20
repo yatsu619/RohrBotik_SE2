@@ -38,6 +38,27 @@ class  RotateCL500 :# patrice idee 'CL500'
             return 0., 0.0, ziel_erreicht
         ''' Sorgt dafür das nur positive Zahlen genommen werden abs() und ermöglicht so einen einfachen vergleich '''
         return 0., RotateCL500._omega,ziel_erreicht
+    
+    
+    @staticmethod
+    def rotate_to_marker(current_pose, marker_winkel_relativ):
+        ''' Neu: Dreht direkt zum erkannten Marker
+            marker_winkel_relativ: Relativer Winkel vom Roboter zum Marker (aus Kamera)'''
+        #Berechne Zielwinkel: aktuelle Pose + relativer Markerwinkel
+        target_angle = current_pose + (marker_winkel_relativ * math.pi / 180)
+        target_angle = RotateCL500.normalize_angle(target_angle)
+
+        #Berechne Winkeldifferenz
+        angle_diff = RotateCL500.normalize_angle(target_angle - current_pose)
+
+        if abs(angle_diff) < RotateCL500._angle_threshold:
+            return 0., 0.0, True  #Ziel erreicht
+        
+        angular_vel = RotateCL500._omega if angle_diff > 0 else -RotateCL500._omega
+        return 0., angular_vel, False
+
+
+
     @staticmethod
     def normalize_angle(angle):
         ''' Sorg dafür das der Winkel im bereich von - pi bis pi liegt '''

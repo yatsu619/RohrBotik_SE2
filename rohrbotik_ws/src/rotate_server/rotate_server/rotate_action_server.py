@@ -6,7 +6,8 @@ from rclpy.action import ActionServer
 from geometry_msgs.msg import Pose2D, Twist
 import time
 import rotate_logic
-from datagate.cam_vision_manager import VisionManager
+#from datagate.cam_vision_manager import VisionManager
+from std_msgs.msg import Float32, Bool
 
 
 class rotate_action_server(Node):
@@ -22,7 +23,9 @@ class rotate_action_server(Node):
         self.current_pose = Pose2D(0.0, 0.0, 0.0)
         self.current_goal_handle = None
         self.count = 0
-        self.visionprocessor = VisionManager.get_instance()                             # Hierrüber lassen sich alle Funktionen des VP mit z.B. marker_gefunden = self.visionprocessor.find_ArUco(0) aufrufen
+        #self.visionprocessor = VisionManager.get_instance()                             # Hierrüber lassen sich alle Funktionen des VP mit z.B. marker_gefunden = self.visionprocessor.find_ArUco(0) aufrufen
+        self.marker_winkel = 0.0
+        self.marker_gefunden = False
         self.rotation_active = False
 
         self.control_timer = self.create_timer(0.1, self.control_step)
@@ -36,7 +39,21 @@ class rotate_action_server(Node):
         
         self.cmd_pub = self.create_publisher(Twist,'/cmd_vel', 10)
         self.pose_sub = self.create_subscription(Pose2D,'/pose',self.pose_callback,10,)
+
+        self.winkel_sub = self.create_subscription(Float32,'winkel_info',self.winkel_callback,10,)
+        self.marker_sub = self.create_subscription(Bool,'found_marker',self.marker_callback,10,)
+
         self.get_logger().info(' Rotate Action Server gestartet.')
+
+    def winkel_callback(self,msg:Float32):
+        '''Empfängt Winkeö vom Marker'''
+        self.marker_winkel = msg.data
+        self.get_logger().info(f"Winkel empfangen: {self.marker_winkel}°")
+
+    def marker_callback(self,msg:Bool):
+        '''Empfängt ob Marker gefunden wurde'''
+        self.marker_gefunden = msg.data
+        self.get_logger().info(f"Marker gefunden")
       
     def goal_callback(self, goal_request):
         """Dort wird das ziel ohne bedingung auf akzeptiern gesetzt """
@@ -100,15 +117,20 @@ class rotate_action_server(Node):
             return
         
 
-        if self.visionprocessor.find_ArUco(114):# interface @Patrice115 
+       #if self.visionprocessor.find_ArUco(114):# interface @Patrice115 
+        #    self.rotation_active = False
+         #   self.stop_motion()
+          #  self.get_logger().info('Seerohr erkannt breche Rotation ab')
+           # #self._finish_goal('Seerohr erkannt breche Rotation ab.')
+            #return
+        
+        if self.marker_gefunden:
             self.rotation_active = False
             self.stop_motion()
             self.get_logger().info('Seerohr erkannt breche Rotation ab')
-            #self._finish_goal('Seerohr erkannt breche Rotation ab.')
             return
 
         
-
         if self.count == 0:
             linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter)
             self.inner_counter += 1 
