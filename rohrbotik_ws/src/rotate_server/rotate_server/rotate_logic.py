@@ -16,8 +16,8 @@ class  RotateCL500 :# patrice idee 'CL500'
 
         
         
-        else:
-            ziel_erreicht=False
+        
+        ziel_erreicht=False
         angle_diff = RotateCL500.normalize_angle(angle_to_target - current_pose)
         if abs(angle_diff) < RotateCL500._angle_threshold:
             ziel_erreicht=True
@@ -33,9 +33,9 @@ class  RotateCL500 :# patrice idee 'CL500'
         if zähler==0 :
             new_angel=current_pose + 79* math.pi / 180 # 79 ist eine primzahl das heißt in 5 umdrehungen sind wir einmal um den kreiß und weiter sso stellen wir sicher das wir mit der kamera auf jeden fall das rohr erkenn 
             #new_angel=RotateCL500.normalize_angle(new_angel)
-        else:
+        
             
-            ziel_erreicht=False
+        ziel_erreicht=False
         angle_diff = RotateCL500.normalize_angle(new_angel - current_pose)
         if abs(angle_diff) < RotateCL500._angle_threshold:
             ziel_erreicht=True
