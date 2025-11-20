@@ -61,10 +61,12 @@ class Camera_data(Node):
             msg_winkel = Float32()
             msg_winkel.data = float(marker_winkel)
             self.pub_winkel.publish(msg_winkel)
+            self.get_logger().info("winkel is raus")
         
             msg_found = Bool()
             msg_found.data = marker_found
             self.pub_marker_seh.publish(msg_found)
+            self.get_logger().info("Marker gefunden")
 
 
 """ <<<<<<<<<<<<<<<<<<<<<<<<<<<< Kommt wieder, wenn wir einen sauberen CustomMessager gebaut haben >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
