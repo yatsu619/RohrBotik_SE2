@@ -9,45 +9,12 @@ import numpy as np
 # **********************Code und Logic Beschreibung ********************* 
 
 """
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Nötige Bausteine des Codes @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Kommentar des Verlorenen @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-<<<<<<<<<<<<<<<<<<<<<< DONE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def "Bilder empfangen und Bereitstellen"
--> Empfangen der Kamera bilder über ROS2 - Camera-Node
--> Wenn nötig Puffern der Bilder (wenn das programm zum auswerten länger braucht als Bilder ankommen)
--> Verarbeiten der Bilder in openCV format und umwandeln in Graustufen (falls das besser zur erkennung von ArUcomarken ist)
--> Bilder der restlichen Klasse / .py Datei breitstellen
-<<<<<<<<<<<<<<<<<<<<<< DONE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-def "and_rutate"(wird von rotate_server erledigt, nicht in cam_logik vertreten) 
-
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Classen Vererbung für VisionProcessor @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-Ebene 1: VisionProcessor        (importiert: cv2, numpy, aruco)
-              ↑
-Ebene 2: VisionManager          (importiert: VisionProcessor)
-              ↑
-Ebene 3: Camera_data Node       (importiert: VisionManager)
-Ebene 3: Rotate Action Server   (importiert: VisionManager)
-
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Anwenden der Funktionen im VisionProcessor in den Actionservern @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-1. Import: 
-    >>> from cam_vision_manager import VisionManager
-2. Vision-Instanz als Classen-Variable herholen:
-    >>> self.vision = VisionManager.get_instance()
-3. Aufrufen der Funktion:
-    >>> marker_gefunden = self.vision.find_ArUco(0)  # Die 0 ist für die Marker-ID: 0 
-4. Infos der Funktion Nutzen / Abrufen: 
-    >>> winkel = self.vision.marker_winkel    ODER   distanz = self.vision.marker_distanz
-
+Bis jetzt baut die Logik darauf auf das immer nur ein ArUco marker im bild sein darf... da wir ja nciht mehr die id übergeben. 
+Das sollte man der schönheit nochmal überdenken. TODO
 
 """
-
-
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ cam_data_logic.py only @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 class VisionProcessor:
@@ -79,15 +46,7 @@ class VisionProcessor:
 
 
 
-
-    def videoframe(self, gray_frame):                                                      # Wird im Subscriber.Node aufgrufen.
-        self.check_grayframe = gray_frame              
-
-    def showImg(self):
-        return self.check_grayframe
-
-
-    def find_ArUco(self, wanted_id):
+    def find_ArUco(self, gray_frame):
         """
         Suchen nach einer Spezifischer Marker-ID.
 
@@ -142,39 +101,38 @@ class VisionProcessor:
         self.marker_distanz = None          # in Metern
         self.marker_winkel = None           # in Grad
 
-        if self.check_grayframe is None:
+        if gray_frame is None:
             return False 
         
-        corners, ids, rejected = self.detector.detectMarkers(self.check_grayframe)
+        corners, ids, rejected = self.detector.detectMarkers(gray_frame)
 
         if ids is None:
             return False
         
-#suche   
-        for i, detected_id in enumerate(ids.flatten()):
-            print(f"Gefundene Marker: {detected_id}")
-            if detected_id == wanted_id:
-                self.marker_gefunden = True
-                self.marker_id = int(detected_id)
+#suche  
+        detected_id = ids 
+        print(f"Gefundene Marker: {detected_id}")
+        self.marker_gefunden = True
+        self.marker_id = int(detected_id)
                 
-                ecken = corners[i][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
+        ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
                 
-                self.marker_mittelpunkt = (
-                    np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
-                    np.mean(ecken[:,1])         #y                
-                )
+        self.marker_mittelpunkt = (
+            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
+            np.mean(ecken[:,1])         #y                
+        )
 
-                self.marker_winkel = self._berechne_winkel()    
+        self.marker_winkel = self._berechne_winkel()    
             
-                breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
-                hoehe = np.linalg.norm(ecken[1] - ecken[2])
-                self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
+        breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
+        hoehe = np.linalg.norm(ecken[1] - ecken[2])
+        self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
 
-                self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
+        self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
 
-                return True
+        return True
             
-        return False
+
     
 
 # def horizontal_distanz_crossair2ArUco (--> dafür da um den winkel zwischen Marker_mittelpunkt und ArUcomarkermittelpunkt zu berechnen)  --> wird vermutlich schon in find_marker gemacht
