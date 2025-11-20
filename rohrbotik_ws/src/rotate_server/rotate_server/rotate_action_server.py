@@ -30,6 +30,7 @@ class rotate_action_server(Node):
 
         self.control_timer = self.create_timer(0.1, self.control_step)
         self.inner_counter = 0
+        self.gesetzter_wki =0 
 
         self._action_server = ActionServer ( self, RotateAc,'rotate',         
                                                 self.execute_callback,          
@@ -133,14 +134,14 @@ class rotate_action_server(Node):
 
         
         if self.count == 0:
-            linear_vel, angular_vel, gedreht_janein =RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein,self.esetzter_wki =RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter,self.gesetzter_wki )
             self.inner_counter += 1 
             if gedreht_janein == True: 
                 self.count == 1
                 self.inner_counter = 0
 
         else:
-            linear_vel, angular_vel, gedreht_janein = RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki  = RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter,self.gesetzter_wki )
             self.inner_counter += 1
             if gedreht_janein == True:
                 if self.count == 10:

@@ -7,7 +7,7 @@ class  RotateCL500 :# patrice idee 'CL500'
    
 
     @staticmethod
-    def rotate_to_pipe(current_pose,zähler):
+    def rotate_to_pipe(current_pose,zähler,angle_to_target):
         ''' Dreht sich um 180 Grad Gedacht um nach der Zweiten Fahrt schneller zu sein '''
         if zähler==0:
             angle_to_target=current_pose
@@ -23,10 +23,10 @@ class  RotateCL500 :# patrice idee 'CL500'
             ziel_erreicht=True
             return 0., 0.0, ziel_erreicht
         
-        return 0., RotateCL500._omega,ziel_erreicht
+        return 0., RotateCL500._omega,ziel_erreicht,angle_to_target
         
     @staticmethod
-    def rotate_more(current_pose,zähler):
+    def rotate_more(current_pose,zähler,new_angel ):
         ''' Dreht sich um 79 Grad damit wir am anfang das rohr finden 
              79 Grad da es eine primzahl ist und so sichergestellt ist das die gleichen spots nicht doppelt aufgerufen werden 
              Außerdem werden so realativ schnell alle 4 Quartale abgedeckt --> Schnelles rohr finden + sichergestellt das das Rohr zu 100% gefunden wird  '''
@@ -41,7 +41,7 @@ class  RotateCL500 :# patrice idee 'CL500'
             ziel_erreicht=True
             return 0., 0.0, ziel_erreicht
         ''' Sorgt dafür das nur positive Zahlen genommen werden abs() und ermöglicht so einen einfachen vergleich '''
-        return 0., RotateCL500._omega,ziel_erreicht
+        return 0., RotateCL500._omega,ziel_erreicht,new_angel 
     
     
     @staticmethod
