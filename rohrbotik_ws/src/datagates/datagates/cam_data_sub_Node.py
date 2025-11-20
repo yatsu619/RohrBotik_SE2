@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 
 from cam_VisionProcessor_logic import VisionProcessor
+from datagates.msg import MarkerInfo
 
 
 
