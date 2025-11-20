@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
 package_name = 'datagates'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'msg'), glob('msg/*.msg')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,8 +27,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'setup_datagate_pub = datagate.cam_data_pub_Node:main',
-            'setup_datagate_sub = datagate.cam_data_sub_Node:main'
+            'setup_datagate_pub = datagates.cam_data_pub_Node:main',
+            'setup_datagate_sub = datagates.cam_data_sub_Node:main'
         ],
     },
 )
