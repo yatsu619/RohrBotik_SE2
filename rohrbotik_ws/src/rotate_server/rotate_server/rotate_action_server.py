@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.action import ActionServer
 from geometry_msgs.msg import Pose2D, Twist
 import time
-import rotate_logic
+from .rotate_logic import RotateCL500
 #from datagate.cam_vision_manager import VisionManager
 from std_msgs.msg import Float32, Bool
 
@@ -20,7 +20,7 @@ class rotate_action_server(Node):
         
 
         super().__init__('rotate_server_node')
-        self.current_pose = Pose2D(0.0, 0.0, 0.0)
+        self.current_pose = Pose2D()
         self.current_goal_handle = None
         self.count = 0
         #self.visionprocessor = VisionManager.get_instance()                             # Hierrüber lassen sich alle Funktionen des VP mit z.B. marker_gefunden = self.visionprocessor.find_ArUco(0) aufrufen
@@ -95,7 +95,7 @@ class rotate_action_server(Node):
 
         while self.rotation_active and rclpy.ok():
             '''rclpy.ok() ist eine Hilfsfunktion die prüft, ob das ros-System noch läuft und die Node weiter machen soll'''
-            time.sleep(0.1)
+            rclpy.spin_once(self, timeout_sec=0.1)
 
         result = RotateAc.Result()
         result.success = True
@@ -106,6 +106,7 @@ class rotate_action_server(Node):
 
     def control_step(self):
         ''' Hier ist die logic integiert der Timer rufft diese in 10Hz auf hier wird geprüft ob wir das rohr erkannt haben und hier wird gedreht  '''
+        self.get_logger().info('Start Controlstep ')
         if self.current_goal_handle is None or not self.rotation_active:
             return
 
@@ -132,14 +133,14 @@ class rotate_action_server(Node):
 
         
         if self.count == 0:
-            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein =RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter)
             self.inner_counter += 1 
             if gedreht_janein == True: 
                 self.count == 1
                 self.inner_counter = 0
 
         else:
-            linear_vel, angular_vel, gedreht_janein = rotate_logic.RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter)
+            linear_vel, angular_vel, gedreht_janein = RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter)
             self.inner_counter += 1
             if gedreht_janein == True:
                 if self.count == 10:
