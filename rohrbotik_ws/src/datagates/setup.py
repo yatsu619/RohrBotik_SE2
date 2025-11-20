@@ -28,7 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'setup_datagate_pub = datagates.cam_data_pub_Node:main',
-            'setup_datagate_sub = datagates.cam_data_sub_Node:main'
+            'setup_datagate_sub = datagates.cam_subpub_Node:main'
         ],
     },
 )
