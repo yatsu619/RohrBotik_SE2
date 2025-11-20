@@ -110,7 +110,7 @@ class VisionProcessor:
             return False
         
 #suche  
-        detected_id = ids 
+        detected_id = ids[0][0]                         #Da ids ein array, brauchen wir nur den ersten marker und die erste info "marker id"
         print(f"Gefundene Marker: {detected_id}")
         self.marker_gefunden = True
         self.marker_id = int(detected_id)
