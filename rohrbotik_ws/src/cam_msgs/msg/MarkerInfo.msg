@@ -1,0 +1,4 @@
+bool marker_found
+float32 marker_distanz
+float32 marker_winkel
+int32 marker_id

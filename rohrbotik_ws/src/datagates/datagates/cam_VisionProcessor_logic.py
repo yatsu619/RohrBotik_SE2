@@ -113,7 +113,7 @@ class VisionProcessor:
         detected_id = ids[0][0]                         #Da ids ein array, brauchen wir nur den ersten marker und die erste info "marker id"
         print(f"Gefundene Marker: {detected_id}")
         self.marker_gefunden = True
-        self.marker_id = int(detected_id)
+        self.marker_id = int(detected_id)               # das int(...) ist um den numpy.int32 in den ROS int32 umzuwandeln
                 
         ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
                 

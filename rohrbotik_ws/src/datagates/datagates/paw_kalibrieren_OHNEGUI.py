@@ -22,6 +22,17 @@ python3 kamera_kalibrierung_headless.py
 # → Zeigt Ergebnis im Terminal
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+Aus setting.json (über rohrbotik_ws)
+
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
+    "cmake.sourceDirectory": "/home/pa99/rohrbotik_lokal_ws/RohrBotik_SE2/rohrbotik_ws/src/interfaces"
+}
+
+
 """
 
 # kamera_kalibrierung_headless.py

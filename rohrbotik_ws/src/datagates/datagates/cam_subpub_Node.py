@@ -1,13 +1,14 @@
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, Int32 # War für die Quicklösung
 from cv_bridge import CvBridge
 import numpy as np
 import cv2 
 import rclpy
 from rclpy.node import Node
 
-from .cam_VisionProcessor_logic import VisionProcessor
-#from datagates.msg import MarkerInfo
+from cam_VisionProcessor_logic import VisionProcessor #hier war mal n punkt vor dem cam_visionprocessor_logic... kein plan ob das da hin gehört
+from cam_msgs.msg import MarkerInfo
+
 
 
 
@@ -26,14 +27,10 @@ class Camera_data(Node):
             self.frame_callback,
             10
         )
-        self.pub_winkel = self.create_publisher(
-            Float32,
-            'winkel_info', 
-            10
-        )
-        self.pub_marker_seh = self.create_publisher(
-            Bool,
-            'found_marker',
+
+        self.camera_data_publish = self.create_publisher(
+            MarkerInfo,
+            'MarkerInfos',
             10
         )
 
@@ -50,6 +47,54 @@ class Camera_data(Node):
         else:
             self.get_logger().info("Da knallts an der Kreuzung gewaltig")
 
+
+#Visionprocessor arbeitet
+
+        if not self.vp.find_ArUco(self.gray_frame):   #TODO: Sollten wir einen kurzen time.Sleep(0.05) einbauen, damit der Visionprozessor das bild verarbeiten und die variablen neu schreiben kann, bevor wir sie HIER eine zeile später abfragen?
+            self.get_logger().info("Es wurde kein Marker gefunden, oder zu viele...")
+            msg_out = MarkerInfo()
+            msg_out.marker_found = False
+            msg_out.marker_distanz = 0.0
+            msg_out.marker_winkel = 0.0
+            msg_out.marker_id = 0
+            self.camera_data_publish.publish(msg_out)
+            return False
+        
+        marker_id = self.vp.marker_id
+        marker_distanz = self.vp.marker_distanz
+        marker_winkel = self.vp.marker_winkel
+        marker_found = self.vp.marker_gefunden
+
+     
+        msg_out = MarkerInfo() #TODO custommessage von Yatheesh
+        msg_out.marker_found = marker_found
+        msg_out.marker_winkel = marker_winkel
+        msg_out.marker_distanz = marker_distanz
+        msg_out.marker_id = marker_id
+        
+        self.camera_data_publish.publish(msg_out)
+
+        self.get_logger().info(f'ArUco gefunden: {marker_found} ID: {marker_id}, distanz: {marker_distanz: .2f}, Winkel: {marker_winkel: .2f}°')
+
+
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+# ***************************  Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
+
+def main(args=None):
+    rclpy.init(args=args)
+    cam_sub_pub = Camera_data()
+    rclpy.spin(cam_sub_pub)
+    cam_sub_pub.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main() 
+
+
+
+    """
 # @@@@@@@@@@@@@@@@   AB hier quick&Dirty lösung für nur zwei publisher   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         if not self.vp.find_ArUco(self.gray_frame):
@@ -68,52 +113,14 @@ class Camera_data(Node):
             self.pub_marker_seh.publish(msg_found)
             self.get_logger().info("Marker gefunden")
 
-
-""" <<<<<<<<<<<<<<<<<<<<<<<<<<<< Kommt wieder, wenn wir einen sauberen CustomMessager gebaut haben >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#Visionprocessor arbeitet
-
-        if not self.vp.find_ArUco(self.gray_frame):   #TODO: Sollten wir einen kurzen time.Sleep(0.05) einbauen, damit der Visionprozessor das bild verarbeiten und die variablen neu schreiben kann, bevor wir sie HIER eine zeile später abfragen?
-            self.get_logger().info("Es wurde kein Marker gefunden, oder zu viele...")
-            msg_out = MarkerInfo()
-            msg_out.detected = False
-            self.pub_cam_data.publish(msg_out)
-            return False
-        
-        marker_id = self.vp.marker_id
-        marker_distanz = self.vp.marker_distanz
-        marker_winkel = self.vp.marker_winkel
-        marker_found = self.vp.marker_gefunden
-
-     
-        msg_out = MarkerInfo() #TODO custommessage von Yatheesh
-        msg_out.detected = marker_gefunden
-        msg_out.angle = marker_winkel
-        msg_out.distance = marker_distanz
-        msg_out.marker_id = marker_id
-        
-        self.pub_cam_data.publish(msg_out)
-
-        self.get_logger().info(f'ArUco gefunden: {marker_found} ID: {marker_id}, distanz: {marker_distanz: .2f}, Winkel: {marker_winkel: .2f}°')
-
-        <<<<Für oben dann... >>>>>
-#        self.pub_cam_data = self.create_publisher(
-#            MarkerInfo,
-#            'marker_info', 
-#            10
-#        )
-"""
-
-
-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-# ***************************  Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
-
-def main(args=None):
-    rclpy.init(args=args)
-    cam_sub_pub = Camera_data()
-    rclpy.spin(cam_sub_pub)
-    cam_sub_pub.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main() 
+            self.pub_winkel = self.create_publisher(
+            Float32,
+            'winkel_info', 
+            10
+        )
+        self.pub_marker_seh = self.create_publisher(
+            Bool,
+            'found_marker',
+            10
+        )
+ """
