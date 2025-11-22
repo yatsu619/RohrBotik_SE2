@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.action import ActionServer
 from geometry_msgs.msg import Pose2D, Twist
 import time
-from .rotate_logic import RotateCL500
+from rotate_server.rotate_action_server import RotateCL500
 from cam_msgs.msg import MarkerInfo
 
 
