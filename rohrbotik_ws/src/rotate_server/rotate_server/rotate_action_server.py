@@ -6,8 +6,7 @@ from rclpy.action import ActionServer
 from geometry_msgs.msg import Pose2D, Twist
 import time
 from .rotate_logic import RotateCL500
-#from datagate.cam_vision_manager import VisionManager
-from std_msgs.msg import Float32, Bool
+from cam_msgs.msg import MarkerInfo
 
 
 class rotate_action_server(Node):
@@ -23,7 +22,6 @@ class rotate_action_server(Node):
         self.current_pose = Pose2D()
         self.current_goal_handle = None
         self.count = 0
-        #self.visionprocessor = VisionManager.get_instance()                             # Hierrüber lassen sich alle Funktionen des VP mit z.B. marker_gefunden = self.visionprocessor.find_ArUco(0) aufrufen
         self.marker_winkel = 0.0
         self.marker_gefunden = False
         self.rotation_active = False
@@ -41,20 +39,30 @@ class rotate_action_server(Node):
         self.cmd_pub = self.create_publisher(Twist,'/cmd_vel', 10)
         self.pose_sub = self.create_subscription(Pose2D,'/pose',self.pose_callback,10,)
 
-        self.winkel_sub = self.create_subscription(Float32,'winkel_info',self.winkel_callback,10,)
-        self.marker_sub = self.create_subscription(Bool,'found_marker',self.marker_callback,10,)
+        self.marker_info = self.create_subscription(
+            MarkerInfo,
+            'MarkerInfos',
+            self.marker_callback,
+            10
+        )
 
         self.get_logger().info(' Rotate Action Server gestartet.')
 
-    def winkel_callback(self,msg:Float32):
-        '''Empfängt Winkeö vom Marker'''
-        self.marker_winkel = msg.data
+
+    def marker_callback(self, msg_in):
+        '''
+        Empfängt Custommessage aus der Datagate und gibt diese in Instanzvariablen des Actionservers.
+        > bool marker_found
+        > float32 marker_distanz
+        > float32 marker_winkel
+        > int32 marker_id
+        '''
+        self.marker_winkel = msg_in.marker_winkel
         self.get_logger().info(f"Winkel empfangen: {self.marker_winkel}°")
 
-    def marker_callback(self,msg:Bool):
-        '''Empfängt ob Marker gefunden wurde'''
-        self.marker_gefunden = msg.data
+        self.marker_gefunden = msg_in.marker_found
         self.get_logger().info(f"Marker gefunden")
+
       
     def goal_callback(self, goal_request):
         """Dort wird das ziel ohne bedingung auf akzeptiern gesetzt """
