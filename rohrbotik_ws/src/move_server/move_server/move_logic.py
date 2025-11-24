@@ -3,20 +3,20 @@ import time
 
 
 class PID:
-    _liner_langsam = 0.30 
-    _linear= 0.40 
+    _liner_langsam = 0.080 
+    _linear= 0.090 
     _angle_threshold = 0.01  
 @staticmethod
-def zur_mitte_regeln(winkel ):
+def zur_mitte_regeln(winkel,linear ):
     """ Regler zur mitte hin braucht den winkel um den er regelen muss """
     if winkel ==0 :
-         return PID._linear,0
+         return linear,0
     else :
-      rad_zur_mitte = (((0- winkel)*0.25)* math.pi / 180)
+      rad_zur_mitte = (((0- winkel)*0.025)* math.pi / 180)
 
       
 
-      return PID._liner_langsam,rad_zur_mitte
+      return linear,rad_zur_mitte
 
 
 
