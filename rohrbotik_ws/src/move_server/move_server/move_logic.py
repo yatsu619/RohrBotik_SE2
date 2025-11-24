@@ -22,16 +22,3 @@ def zur_mitte_regeln(winkel,linear ):
 
 
 
-
-
-def timer(sekunden):
-    ''' nur zum test fliegt wieder raus '''
-    for i in range(sekunden,-sekunden,-1):
-        print(i)
-        a,b=zur_mitte_regeln(i )
-        print(a,'_', b)
-        time.sleep(0.5)
-    print("⏰ Zeit ist um!")
-        
-timer(90)  # 10-Sekunden-Timer
-
