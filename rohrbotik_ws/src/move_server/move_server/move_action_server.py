@@ -1,23 +1,143 @@
 from .move_logic import PID
+import rclpy
+from interfaces.action import MoveAc
+from rclpy.action import ActionServer, GoalResponse, CancelResponse
+from rclpy.node import Node
+from rclpy.action import ActionServer
+from geometry_msgs.msg import Twist
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from cam_msgs.msg import MarkerInfo
+#import time
+import threading
+
+class MoveActionServer(Node):
+    def __init__(self):
+        super().__init__('move_server_node')
+        '''für Multi-Threading: control-step und execute callback können gleichzeitig laufen'''
+        self.callback_group = ReentrantCallbackGroup()  
+        self.done_event = threading.Event()     #event-getriggert, ersetzt die while schleife im execute callback
+        self.current_goal_handle = None
+        self.move_active = False
+        self.target_vel = 0.0
+        self.marker_found = False
+        self.marker_distanz = 0.0
+        self.marker_winkel = 0.0
+        self.marker_id = 0              #nicht sicher?!
+
+        self.control_timer = self.create_timer(0.1, 
+                                               self.control_step,
+                                               callback_group = self.callback_group)
+        
+        self._action_server = ActionServer(self,
+                                            MoveAc,
+                                            'move', 
+                                            self.execute_callback,
+                                            goal_callback = self.goal_callback,
+                                            cancel_callback = self.cancel_callback,
+                                            callback_group = self.callback_group)
+        
+        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        
+        self.marker_sub = self.create_subscription(MarkerInfo,
+                                                    'marker_info',
+                                                    self.marker_callback,
+                                                    10,
+                                                    callback_group = self.callback_group)
+        
+        self.get_logger().info('Move Action Server wurde gestartet')
 
 
+    def goal_callback(self, goal_request):
+        self.get_logger().info(f'Neues Move-Ziel: {goal_request.target_vel}')
+        return GoalResponse.ACCEPT
+            
+    def cancel_callback(self, goal_handle):
+        self.get_logger().info('Move Abbruch angefragt')
+        self.move_active = False
+        self.stop_motion()
+        self.done_event.set()   #beendet execute callback
+        return CancelResponse.ACCEPT
+            
+    def marker_callback(self, msg: MarkerInfo):
+         self.marker_found = msg.marker_found
+         self.marker_distanz = msg.marker_distanz
+         self.marker_winkel = msg.marker_winkel
+         self.marker_id = msg.marker_id
+    
+    def execute_callback(self, goal_handle):
+        self.current_goal_handle = goal_handle
+        self.move_active = True
+        self.done_event.clear()  #setzt das event zurück für den neuen durchlauf
 
+        self.target_vel = goal_handle.request.target_vel
+        self.target_vel = max(0.0, min(0.2, self.target_vel))
+        self.get_logger().info(f'Linearfahrt starten mit {self.target_vel} m/s')
 
+        self.done_event.wait()  #warten auf event, welches im control-step gesetzt wird
 
+        result = MoveAc.Result()
+        result.success = True
+        goal_handle.succeed()
+        self.get_logger().info('Move abgeschlossen')
+        self.current_goal_handle = None
+        return result
+    
+    def control_step(self):
+        '''Timer-Callback, welches alle 0,1s aufgerufen wird (10Hz)'''
 
+        if not self.move_active or self.current_goal_handle is None:       #Wenn der Bot nicht fährt, soll er auch nichts tun
+              return
+         
+        if self.current_goal_handle.is_cancel_requested:            #Wenn Abbruch angefragt wurde
+              self.move_active = False
+              self.stop_motion()
+              self.done_event.set()
+              self.get_logger().info('Move abgebrochen')
+              return
+         
+        MARKER_STOPP_DISTANZ = 0.2  #WICHTIG -> anpassen bzw. kurz besprechen
+        if self.marker_found and self.marker_distanz < MARKER_STOPP_DISTANZ:
+              self.move_active = False
+              self.stop_motion()
+              self.get_logger().info(f'Marker erreicht')
+              self.done_event.set() #Event setzen, um execute callback zu beenden
+              return
+         
+        '''Aufruf des Reglers'''
+        linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel)      #FRAGE: target_vel aus GOAL oder vom regler, also linear_vel?
 
+        cmd = Twist()
+        '''Geschwindigkeit publishen'''
+        cmd.linear.x = linear_vel
+        cmd.angular.z = angular_vel
+        self.cmd_pub.publish(cmd)
 
+        feedback = MoveAc.Feedback()
+        feedback.aktuelle_vel = linear_vel
+        feedback.marker_erkannt = self.marker_found
+        self.current_goal_handle.publish_feedback(feedback)
 
+    def stop_motion(self):
+        '''Roboter sofort anhalten'''
+        stop = Twist()
+        self.cmd_pub.publish(stop)
+        self.get_logger().info('Roboter gestoppt')
 
+def main(args = None):
+    rclpy.init(args = args)
+    node = MoveActionServer()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
 
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        node.get_logger().info('Server unterbrochen')
+    finally:
+        node.stop_motion()
+        node.destroy_node()
+        rclpy.shutdown()
 
-liner_vel,angular_vel=PID.zur_mitte_regeln
-""" aufruf des reglers """
-
-
-
- cmd_aktuell = Twist()
-""" publischen der geschwindeigkeit """
-        cmd_aktuell.linear.x = linear_vel
-        cmd_aktuell.angular.z = angular_vel
-        self.cmd_pub.publish(cmd_aktuell)
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,5 @@
 # Request (goal)
-bool 
+float32 target_vel
 ---
 
 # Result 
@@ -7,4 +7,5 @@ bool success
 ---
 
 #Feedback
-float32 
+float32 aktuelle_vel
+bool marker_erkannt
