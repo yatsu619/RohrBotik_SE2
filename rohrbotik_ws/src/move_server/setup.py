@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'move_server_node = move_server.move_action_server:main'
         ],
     },
 )

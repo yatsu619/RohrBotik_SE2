@@ -72,6 +72,7 @@ class MoveActionServer(Node):
 
         self.target_vel = goal_handle.request.target_vel
         self.target_vel = max(0.0, min(0.2, self.target_vel))
+
         self.get_logger().info(f'Linearfahrt starten mit {self.target_vel} m/s')
 
         self.done_event.wait()  #warten auf event, welches im control-step gesetzt wird
@@ -105,7 +106,7 @@ class MoveActionServer(Node):
               return
          
         '''Aufruf des Reglers'''
-        linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel)      #FRAGE: target_vel aus GOAL oder vom regler, also linear_vel?
+        linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)      #FRAGE: target_vel aus GOAL oder vom regler, also linear_vel?
 
         cmd = Twist()
         '''Geschwindigkeit publishen'''
