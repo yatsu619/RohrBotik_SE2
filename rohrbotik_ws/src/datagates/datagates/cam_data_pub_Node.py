@@ -17,7 +17,7 @@ class CameraOutPut(Node):
             10
         ) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
         
-        self.camera = cv.VideoCapture(0)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
+        self.camera = cv.VideoCapture(4)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
         self.bridge = CvBridge()                                            #Hier, weil sonst die Kamera bei jedem def timer_callback aufgerufen werden würde
         self.timer = self.create_timer(1/24, self.timer_callback)
 

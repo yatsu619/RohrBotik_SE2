@@ -6,7 +6,7 @@ import cv2
 import rclpy
 from rclpy.node import Node
 
-from cam_VisionProcessor_logic import VisionProcessor #hier war mal n punkt vor dem cam_visionprocessor_logic... kein plan ob das da hin gehört
+from .cam_VisionProcessor_logic import VisionProcessor 
 from cam_msgs.msg import MarkerInfo
 
 
