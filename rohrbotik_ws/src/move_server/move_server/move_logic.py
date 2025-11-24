@@ -12,7 +12,10 @@ def zur_mitte_regeln(winkel ):
     if winkel ==0 :
          return PID._linear,0
     else :
-      rad_zur_mitte =  (winkel* math.pi / 180)*-1
+      rad_zur_mitte = (((0- winkel)*0.25)* math.pi / 180)
+
+      
+
       return PID._liner_langsam,rad_zur_mitte
 
 
@@ -27,8 +30,8 @@ def timer(sekunden):
         print(i)
         a,b=zur_mitte_regeln(i )
         print(a,'_', b)
-        time.sleep(1)
+        time.sleep(0.5)
     print("⏰ Zeit ist um!")
         
-timer(10)  # 10-Sekunden-Timer
+timer(90)  # 10-Sekunden-Timer
 
