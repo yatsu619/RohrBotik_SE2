@@ -112,6 +112,7 @@ class MoveActionServer(Node):
         '''Geschwindigkeit publishen'''
         cmd.linear.x = linear_vel
         cmd.angular.z = angular_vel
+        cmd.angular.z = float(angular_vel)      #konvertieren damit z immer float ist
         self.cmd_pub.publish(cmd)
 
         feedback = MoveAc.Feedback()
