@@ -40,7 +40,7 @@ class MoveActionServer(Node):
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         
         self.marker_sub = self.create_subscription(MarkerInfo,
-                                                    'marker_info',
+                                                    'MarkerInfos',              #topic wurde von marker_info zu MarkerInfos geändert
                                                     self.marker_callback,
                                                     10,
                                                     callback_group = self.callback_group)
@@ -64,6 +64,7 @@ class MoveActionServer(Node):
          self.marker_distanz = msg.marker_distanz
          self.marker_winkel = msg.marker_winkel
          self.marker_id = msg.marker_id
+         self.get_logger().info(f'Marker empfangen: found = {self.marker_found}, dist = {self.marker_distanz:.2f}m')
     
     def execute_callback(self, goal_handle):
         self.current_goal_handle = goal_handle
@@ -96,17 +97,24 @@ class MoveActionServer(Node):
               self.done_event.set()
               self.get_logger().info('Move abgebrochen')
               return
+        
+        
          
         MARKER_STOPP_DISTANZ = 0.2  #WICHTIG -> anpassen bzw. kurz besprechen
+        #if self.marker_found:
+            #self.get_logger().info(f'Check: marker_found = {self.marker_found}, dist = {self.marker_distanz:.2f}m, stopp_bei = {MARKER_STOPP_DISTANZ}m')
+
         if self.marker_found and self.marker_distanz < MARKER_STOPP_DISTANZ:
               self.move_active = False
               self.stop_motion()
               self.get_logger().info(f'Marker erreicht')
               self.done_event.set() #Event setzen, um execute callback zu beenden
               return
-         
+
+        self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°') 
         '''Aufruf des Reglers'''
         linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)      #FRAGE: target_vel aus GOAL oder vom regler, also linear_vel?
+        self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
 
         cmd = Twist()
         '''Geschwindigkeit publishen'''
