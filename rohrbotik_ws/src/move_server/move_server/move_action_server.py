@@ -100,7 +100,7 @@ class MoveActionServer(Node):
         
         
          
-        MARKER_STOPP_DISTANZ = 0.2  #WICHTIG -> anpassen bzw. kurz besprechen
+        MARKER_STOPP_DISTANZ = 0.45  #WICHTIG -> anpassen bzw. kurz besprechen
         #if self.marker_found:
             #self.get_logger().info(f'Check: marker_found = {self.marker_found}, dist = {self.marker_distanz:.2f}m, stopp_bei = {MARKER_STOPP_DISTANZ}m')
 
@@ -118,8 +118,7 @@ class MoveActionServer(Node):
 
         cmd = Twist()
         '''Geschwindigkeit publishen'''
-        cmd.linear.x = linear_vel
-        cmd.angular.z = angular_vel
+        cmd.linear.x = float(linear_vel)
         cmd.angular.z = float(angular_vel)      #konvertieren damit z immer float ist
         self.cmd_pub.publish(cmd)
 

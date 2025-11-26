@@ -11,15 +11,10 @@ class PID:
     def zur_mitte_regeln(winkel,linear ):
         """ Regler zur mitte hin braucht den winkel um den er regelen muss """
         if winkel ==0 :
-            return float(linear), 0.0
+            return linear, 0.0
         else :
-            rad_zur_mitte = (((0- winkel)*0.025)* math.pi / 180)
+            rad_zur_mitte = (((0- winkel)*1.1)* math.pi / 180) * -1
 
       
 
-            return float(linear), float(rad_zur_mitte)
-
-
-
-
-
+            return linear, rad_zur_mitte
