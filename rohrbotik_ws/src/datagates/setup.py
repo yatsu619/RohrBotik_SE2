@@ -14,6 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'msg'), glob('msg/*.msg')),
     ],
+
+
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='pa99',
@@ -25,6 +27,8 @@ setup(
             'pytest',
         ],
     },
+
+    
     entry_points={
         'console_scripts': [
             'cam_data_pub_Node = datagates.cam_data_pub_Node:main',
