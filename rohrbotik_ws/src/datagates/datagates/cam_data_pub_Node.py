@@ -18,6 +18,8 @@ class CameraOutPut(Node):
         ) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
         
         self.camera = cv.VideoCapture(0)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
+        #self.camera.set(cv.CAP_PROP_FRAME_WIDTH, 1920)                      #Eisntellung von Default(640x480) auf (1920x1080)
+        #self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)                     #Einstellung von Default auf HighRes
         self.bridge = CvBridge()                                            #Hier, weil sonst die Kamera bei jedem def timer_callback aufgerufen werden würde
         self.timer = self.create_timer(1/24, self.timer_callback)
 
