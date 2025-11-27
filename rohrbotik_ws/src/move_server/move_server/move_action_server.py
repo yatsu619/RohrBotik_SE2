@@ -3,12 +3,10 @@ import rclpy
 from interfaces.action import MoveAc
 from rclpy.action import ActionServer, GoalResponse, CancelResponse
 from rclpy.node import Node
-from rclpy.action import ActionServer
 from geometry_msgs.msg import Twist
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from cam_msgs.msg import MarkerInfo
-#import time
 import threading
 
 class MoveActionServer(Node):
@@ -23,7 +21,7 @@ class MoveActionServer(Node):
         self.marker_found = False
         self.marker_distanz = 0.0
         self.marker_winkel = 0.0
-        self.marker_id = 0              #nicht sicher?!
+        self.marker_id = 0             
 
         self.control_timer = self.create_timer(0.1, 
                                                self.control_step,
@@ -66,8 +64,8 @@ class MoveActionServer(Node):
          self.marker_id = msg.marker_id
          self.get_logger().info(f'Marker empfangen: found = {self.marker_found}, dist = {self.marker_distanz:.2f}m')
     
-    def execute_callback(self, goal_handle):
-        self.current_goal_handle = goal_handle
+    def execute_callback(self, goal_handle):            #goal_handle hat das goal und die Methoden für feedback und result
+        self.current_goal_handle = goal_handle          #speichert goal_handle in eine Instanzvariable 
         self.move_active = True
         self.done_event.clear()  #setzt das event zurück für den neuen durchlauf
 
@@ -82,7 +80,7 @@ class MoveActionServer(Node):
         result.success = True
         goal_handle.succeed()
         self.get_logger().info('Move abgeschlossen')
-        self.current_goal_handle = None
+        self.current_goal_handle = None         #löscht das aktuelle goal_handle damit control_step weiß, dass keine action läuft
         return result
     
     def control_step(self):
@@ -100,7 +98,7 @@ class MoveActionServer(Node):
         
         
          
-        MARKER_STOPP_DISTANZ = 0.45  #WICHTIG -> anpassen bzw. kurz besprechen
+        MARKER_STOPP_DISTANZ = 0.45  
         #if self.marker_found:
             #self.get_logger().info(f'Check: marker_found = {self.marker_found}, dist = {self.marker_distanz:.2f}m, stopp_bei = {MARKER_STOPP_DISTANZ}m')
 
@@ -111,16 +109,16 @@ class MoveActionServer(Node):
               self.done_event.set() #Event setzen, um execute callback zu beenden
               return
 
-        self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°') 
+        self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°')          #Test log
         '''Aufruf des Reglers'''
-        linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)      #FRAGE: target_vel aus GOAL oder vom regler, also linear_vel?
+        linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)     
         self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
 
         cmd = Twist()
         '''Geschwindigkeit publishen'''
         cmd.linear.x = float(linear_vel)
         cmd.angular.z = float(angular_vel)      #konvertieren damit z immer float ist
-        self.cmd_pub.publish(cmd)
+        self.cmd_pub.publish(cmd)               #sendet twist_message auf das topic cmd_vel
 
         feedback = MoveAc.Feedback()
         feedback.aktuelle_vel = linear_vel
@@ -130,14 +128,14 @@ class MoveActionServer(Node):
     def stop_motion(self):
         '''Roboter sofort anhalten'''
         stop = Twist()
-        self.cmd_pub.publish(stop)
+        self.cmd_pub.publish(stop)                      #stop an cmd_vel senden
         self.get_logger().info('Roboter gestoppt')
 
 def main(args = None):
     rclpy.init(args = args)
-    node = MoveActionServer()
-    executor = MultiThreadedExecutor()
-    executor.add_node(node)
+    node = MoveActionServer()               #erstellt instanz des move action servers ->init wird aufgerufen und erstellt das oben angegebene
+    executor = MultiThreadedExecutor()      #executor: entscheidet wann welcher callback ausgeführt wird mit mehreren threads
+    executor.add_node(node)                 #fügt den move action server dem executor hinzu
 
     try:
         executor.spin()
