@@ -29,7 +29,7 @@ class CameraOutPut(Node):
             frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             msg = self.bridge.cv2_to_imgmsg(frame_gray, encoding='mono8')
             self.publisher.publish(msg)
-            self.get_logger().info("Bild wird verschickt... ")
+#           self.get_logger().info("Bild wird verschickt... ")
         else:
             self.get_logger().info("Bild konnte nicht aus der Kammerageladen werden!!")
 

@@ -13,8 +13,9 @@ class PID:
         if winkel ==0 :
             return linear, 0.0
         else :
-            rad_zur_mitte = (((0- winkel)*1.1)* math.pi / 180) * -1
+            rad_zur_mitte = (((0- winkel)*1.1)* math.pi / 180) * -1  
+        #                     ^^^^                              ^^^^
+        #                   Invertiert                       Invertiert
 
-      
-
+    
             return linear, rad_zur_mitte

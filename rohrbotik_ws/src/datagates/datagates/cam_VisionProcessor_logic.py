@@ -70,7 +70,7 @@ class VisionProcessor:
         corners[i][0][0] # Die erste Ecke (oben links)
 
 
-                    corners = [
+            corners = [
                 # Erster Marker (z.B. ID 0)
                 [
                     [  # Diese extra Klammer kommt von OpenCV's Format
@@ -118,7 +118,7 @@ class VisionProcessor:
         ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
                 
         self.marker_mittelpunkt = (
-            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> Nur Spalte 0 und alle Zeilen... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
+            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> ... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
             np.mean(ecken[:,1])         #y                
         )
 
@@ -148,19 +148,14 @@ class VisionProcessor:
         marker_x = self.marker_mittelpunkt[0]
         bild_mitte_x = self.KAMERA_Breite_Pixel / 2
 
-        pixel_abweichung_x = bild_mitte_x - marker_x
+        pixel_abweichung_x = bild_mitte_x - marker_x                                # Hier schwachstelle, es wird je nach berechnung ein Positiver oder ein negativer Wert ausgeben. 
 
         grad_pro_pixel = self.KAMERA_Sichtfeld_GRAD / self.KAMERA_Breite_Pixel
         winkel_grad = pixel_abweichung_x * grad_pro_pixel
 
         return winkel_grad
 
-# VSP = VisionProcessor() --> Alternativ zum Manager, kann ich auch innerhalb der klasse einfach eine einzelne Instanz aufrufen und diese per Variable an andere Dateien übergeben.
 
-
-# def rotation (brauchen wir hier eigentlich nicht)
-
-#   def linear fahrt (brauchen wir hier eigentlich nicht)
 
 
 
