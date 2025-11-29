@@ -1,0 +1,9 @@
+#Goal
+float32 target_vel
+---
+#Result
+bool success
+string end_reason
+---
+#Feedback
+string current_phase
