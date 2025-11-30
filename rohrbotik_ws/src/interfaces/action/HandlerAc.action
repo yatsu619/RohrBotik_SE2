@@ -3,7 +3,9 @@ float32 target_vel
 ---
 #Result
 bool success
+int32 completed_cylces
 string end_reason
 ---
 #Feedback
 string current_phase
+int32 current_cycle
