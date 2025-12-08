@@ -37,7 +37,12 @@ class VisionProcessor:
 
 #Konstanten der Rasberry Py Camera REV 1.3 // Sensor OmniVision OV5647
 
-        self.MARKER_GROESSE_CM = 17.5       #TODO:  Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand!
+        self.MARKER_GROESSE_CM_STANDARD = 17.5       #Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand! als Standardwert.
+        self.MARKER_GROESSEN = {
+            0:17.5,
+            69:6.2,                                   #TODO: id : Größe in CM // muss noch eingetragen werden, wenn der Marker festgelegt ist.
+        }
+        
         self.KAMERA_BRENNWEITE = 618        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
 
         self.KAMERA_Breite_Pixel = 640      #TODO:  Oder je nach Einstellung 1280 oder 1920
@@ -128,6 +133,8 @@ class VisionProcessor:
         hoehe = np.linalg.norm(ecken[1] - ecken[2])
         self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
 
+
+        self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(self.marker_id, self.MARKER_GROESSE_CM_STANDARD )
         self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
 
         return True
