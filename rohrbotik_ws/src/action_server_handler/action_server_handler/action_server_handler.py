@@ -81,7 +81,7 @@ class HandlerActionServer(Node):
 
         result = HandlerAc.Result()
         result.success = self.mission_success
-        result.completed_cycles = self.current_cylce
+        result.completed_cycles = self.current_cycle
         result.end_reason = self.end_reason
 
         if self.mission_success:
@@ -112,7 +112,7 @@ class HandlerActionServer(Node):
 
         if not goal_handle.accepted:
             self.get_logger().error('Rotate Goal abgelehnt')
-            self.misssion_success = False
+            self.mission_success = False
             self.end_reason = "ROTATE_GOAL_REJECTED"
             self.done_event.set()
             return
@@ -194,8 +194,8 @@ class HandlerActionServer(Node):
             return
         
         feedback = HandlerAc.Feedback()
-        feedback.current_state = state
-        feedback.completed_cycles = self.current_cycle +1
+        feedback.current_phase = state
+        #feedback.completed_cycles = self.current_cycle +1
         self.current_goal_handle.publish_feedback(feedback)
     
 
