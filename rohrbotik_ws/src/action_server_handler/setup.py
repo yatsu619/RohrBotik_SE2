@@ -27,7 +27,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'handler_server_node = handler_server.action_server_hanlder:main'
+            'handler_node = action_server_handler.action_server_handler:main'
         ],
     },
 )
