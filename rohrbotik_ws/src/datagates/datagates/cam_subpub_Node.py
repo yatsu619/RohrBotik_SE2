@@ -50,7 +50,7 @@ class Camera_data(Node):
 
 #Visionprocessor arbeitet
 
-        if not self.vp.find_ArUco(self.gray_frame):   #TODO: Sollten wir einen kurzen time.Sleep(0.05) einbauen, damit der Visionprozessor das bild verarbeiten und die variablen neu schreiben kann, bevor wir sie HIER eine zeile später abfragen?
+        if not self.vp.find_ArUco(self.gray_frame):   
             self.get_logger().info("Es wurde kein Marker gefunden, oder zu viele...")
             msg_out = MarkerInfo()
             msg_out.marker_found = False
