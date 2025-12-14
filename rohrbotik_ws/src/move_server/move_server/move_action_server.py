@@ -93,6 +93,9 @@ class MoveActionServer(Node):
     def control_step(self):
         '''Timer-Callback, welches alle 0,1s aufgerufen wird (10Hz)'''
 
+        linear_vel = 0.0
+        angular_vel = 0.0
+
         if not self.move_active or self.current_goal_handle is None:       #Wenn der Bot nicht fährt, soll er auch nichts tun
               return
          
@@ -109,7 +112,7 @@ class MoveActionServer(Node):
         #if self.marker_found:
             #self.get_logger().info(f'Check: marker_found = {self.marker_found}, dist = {self.marker_distanz:.2f}m, stopp_bei = {MARKER_STOPP_DISTANZ}m')
 
-        if self.marker_found and self.marker_distanz < MARKER_STOPP_DISTANZ:
+        if self.marker_found and self.marker_id == 0 and self.marker_distanz < MARKER_STOPP_DISTANZ:
               self.move_active = False
               self.stop_motion()
               self.get_logger().info(f'Marker erreicht')
@@ -125,6 +128,7 @@ class MoveActionServer(Node):
             else:
                 linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)     
                 self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
+
         elif self.marker_found== False and self.marker_puffer >=12 :
             """ Wir prüfen ob wir den marker sehen und wenn nicht warten wir bis wir ihn 12 mal nicht sehen bevor wir stehen bleiben bei 24Hz entspricht 12 einer halben sekunde """
             self.stop_motion()
