@@ -118,8 +118,13 @@ class MoveActionServer(Node):
         if self.marker_found== True :
             self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°')          #Test log
             '''Aufruf des Reglers'''
-            linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)     
-            self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
+            if self.marker_id==69:
+                linear_vel,angular_vel = PID.abstand_und_winkel_regeln(self.marker_winkel,self.target_vel,self.marker_distanz )
+                self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
+
+            else:
+                linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)     
+                self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
         elif self.marker_found== False and self.marker_puffer >=12 :
             """ Wir prüfen ob wir den marker sehen und wenn nicht warten wir bis wir ihn 12 mal nicht sehen bevor wir stehen bleiben bei 24Hz entspricht 12 einer halben sekunde """
             self.stop_motion()

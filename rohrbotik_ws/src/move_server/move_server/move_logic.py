@@ -5,6 +5,8 @@ import time
 class PID: 
     _sollwinkel =0
     _gain = 1.1
+    _sollabstand= 0.5 
+    _gain_folgen =1.3
 
     @staticmethod
     def zur_mitte_regeln(aktueller_winkel,soll_geschwindigkeit_linear ):
@@ -15,3 +17,16 @@ class PID:
         else :
             angular_velocity = (((aktueller_winkel - PID._sollwinkel)*PID._gain)* math.pi / 180)     
             return soll_geschwindigkeit_linear, angular_velocity
+        
+
+    def abstand_und_winkel_regeln(aktueller_winkel,soll_geschwindigkeit_linear,distanz_nach_vorne_gemessen  ):
+        """ Regler der den Abstand regelt aufgrund der distanz zum Marker und einer soll_geschwindigkeit dazu sort der das der bot gerade zur mitte Föhrt  """
+        """ gemessener Winkel , Richtgeschwindigkeit , Abstand zum Marker (gemessen)"""
+
+        angular_velocity = (((aktueller_winkel - PID._sollwinkel)*PID._gain)* math.pi / 180) 
+        linear_velocity = (((distanz_nach_vorne_gemessen - PID._sollabstand)*PID._gain_folgen))* math.pi / 180
+        linear_velocity += soll_geschwindigkeit_linear
+
+        return linear_velocity  ,angular_velocity
+
+        
