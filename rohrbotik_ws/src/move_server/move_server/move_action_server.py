@@ -4,6 +4,7 @@ from interfaces.action import MoveAc
 from rclpy.action import ActionServer, GoalResponse, CancelResponse
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Float32
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from cam_msgs.msg import MarkerInfo
@@ -22,7 +23,8 @@ class MoveActionServer(Node):
         self.marker_puffer=0 
         self.marker_distanz = 0.0
         self.marker_winkel = 0.0
-        self.marker_id = 0             
+        self.marker_id = 0
+        self.soll_abstand = 0.5             
 
         self.control_timer = self.create_timer(0.1, 
                                                self.control_step,
@@ -41,6 +43,12 @@ class MoveActionServer(Node):
         self.marker_sub = self.create_subscription(MarkerInfo,
                                                     'MarkerInfos',              #topic wurde von marker_info zu MarkerInfos geändert
                                                     self.marker_callback,
+                                                    10,
+                                                    callback_group = self.callback_group)
+        
+        self.abstand_sub = self.create_subscription(Float32, 
+                                                    '/Abstand',
+                                                    self.abstand_callback,
                                                     10,
                                                     callback_group = self.callback_group)
         
@@ -68,6 +76,11 @@ class MoveActionServer(Node):
              self.marker_puffer +=1
         if self.marker_found== True:
              self.marker_puffer= 0 
+    
+    def abstand_callback(self, msg: Float32):
+        '''Empfängt Soll-Abstand vom Topic /Abstand'''
+        self.soll_abstand = max(0.2, min(1.0, msg.data))
+        self.get_logger().info(f'Neuer Soll-Abstand: {self.soll_abstand:.2f}m (empfangen: {msg.data:.2f}m)')
     
 
 
@@ -109,8 +122,6 @@ class MoveActionServer(Node):
         
          
         MARKER_STOPP_DISTANZ = 0.45  
-        #if self.marker_found:
-            #self.get_logger().info(f'Check: marker_found = {self.marker_found}, dist = {self.marker_distanz:.2f}m, stopp_bei = {MARKER_STOPP_DISTANZ}m')
 
         if self.marker_found and self.marker_id == 0 and self.marker_distanz < MARKER_STOPP_DISTANZ:
               self.move_active = False
@@ -122,7 +133,7 @@ class MoveActionServer(Node):
             self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°')          #Test log
             '''Aufruf des Reglers'''
             if self.marker_id==69:
-                linear_vel,angular_vel = PID.abstand_und_winkel_regeln(self.marker_winkel,self.target_vel,self.marker_distanz )
+                linear_vel,angular_vel = PID.abstand_und_winkel_regeln(self.marker_winkel,self.target_vel,self.marker_distanz, self.soll_abstand)
                 self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
 
             else:
