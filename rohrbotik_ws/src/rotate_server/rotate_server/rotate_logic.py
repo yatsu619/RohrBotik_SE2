@@ -46,6 +46,8 @@ class  RotateCL500 :# patrice idee 'CL500'
     
     @staticmethod
     def rotate_to_marker(current_pose, marker_winkel_relativ):
+
+      
         ''' Neu: Dreht direkt zum erkannten Marker
             marker_winkel_relativ: Relativer Winkel vom Roboter zum Marker (aus Kamera)'''
         #Berechne Zielwinkel: aktuelle Pose + relativer Markerwinkel
@@ -59,7 +61,8 @@ class  RotateCL500 :# patrice idee 'CL500'
             return 0., 0.0, True  #Ziel erreicht
         
         angular_vel = RotateCL500._omega if angle_diff > 0 else -RotateCL500._omega
-        return 0., angular_vel, False
+        """ wird nie aufgerufen is dead code ges Funktion ka von wem PS: LG @jojo"""
+        return 0., angular_vel, False 
 
 
 

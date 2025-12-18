@@ -22,13 +22,13 @@ class RotateActionServer(Node):
         super().__init__('rotate_server_node')
         self.callback_group = ReentrantCallbackGroup()
         self.done_event = threading.Event()
-        self.current_pose = Pose2D()
+        
         self.current_goal_handle = None
         self.count = 0
         self.marker_distanz = 0.0
         self.marker_winkel = 0.0
         self.marker_id = 0
-        self.rotation_start_winkel = 0.0
+    
         self.one_direction = False
         self.marker_gefunden = False
         self.rotation_active = False
@@ -49,11 +49,7 @@ class RotateActionServer(Node):
                                             callback_group=self.callback_group) 
         
         self.cmd_pub = self.create_publisher(Twist,'/cmd_vel', 10)
-        self.pose_sub = self.create_subscription(Pose2D,
-                                                 '/pose',
-                                                 self.pose_callback,
-                                                 10,
-                                                 callback_group=self.callback_group)
+        
 
         self.marker_info = self.create_subscription(MarkerInfo,
                                                     'MarkerInfos',
@@ -91,14 +87,6 @@ class RotateActionServer(Node):
         self.marker_id = msg.marker_id
         self.get_logger().info(f'Marker empfangen: found = {self.marker_gefunden}, dist = {self.marker_distanz:.2f}m,')
 
-    def pose_callback(self,msg:Pose2D):
-        ''' Integriert die Pose vom subscriber in die current_pose vom type Pose2D  '''
-        self.current_pose = Pose2D(x=msg.x, y=msg.y, theta=msg.theta)
-        #self.current_pose.x=msg.x
-        #self.current_pose.y=msg.y
-        #self.current_pose.theta=msg.theta
-        self.get_logger().info(f'Pose empfangen: x={msg.x}, y={msg.y}, theta={msg.theta}')
-    
     
     def execute_callback(self, goal_handle):
         '''Die Ausführende gewalt    '''
@@ -111,10 +99,10 @@ class RotateActionServer(Node):
         self.inner_counter = 0
         self.gesetzter_wki = 0.0
 
-        self.rotation_start_winkel = self.current_pose.theta
+    
 
-        self.get_logger().info(f'Starte Rotation: Start-Winkel ={self.rotation_start_winkel:.2f} rad,'
-                               f'one_direction={self.one_direction}')
+        #self.get_logger().info(f'Starte Rotation: Start-Winkel ={self.rotation_start_winkel:.2f} rad,'
+                           #    f'one_direction={self.one_direction}')
 
         self.done_event.wait()
 
@@ -151,14 +139,14 @@ class RotateActionServer(Node):
             return         #evtl. raus
 
         if self.count == 0:
-            linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki =RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter,self.gesetzter_wki )
+            linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki =RotateCL500.rotate_to_pipe(self.marker_winkel, self.inner_counter,self.gesetzter_wki )
             self.inner_counter += 1 
             if gedreht_janein == True: 
                 self.count = 1
                 self.inner_counter = 0
 
         else:
-            linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki  = RotateCL500.rotate_more(self.current_pose.theta , self.inner_counter,self.gesetzter_wki )
+            linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki  = RotateCL500.rotate_more(self.marker_winkel , self.inner_counter,self.gesetzter_wki )
             self.inner_counter += 1
             if gedreht_janein == True:
                 if self.count == 10:
