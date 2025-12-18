@@ -40,7 +40,7 @@ class VisionProcessor:
         self.MARKER_GROESSE_CM_STANDARD = 17.5       #Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand! als Standardwert.
         self.MARKER_GROESSEN = {
             0:17.5,
-            69:6.2,                                   #TODO: id : Größe in CM // muss noch eingetragen werden, wenn der Marker festgelegt ist.
+            69:7.5,                                   #TODO: id : Größe in CM // muss noch eingetragen werden, wenn der Marker festgelegt ist.
         }
         
         self.KAMERA_BRENNWEITE = 618        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
