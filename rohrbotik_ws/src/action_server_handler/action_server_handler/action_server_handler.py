@@ -122,7 +122,7 @@ class HandlerActionServer(Node):
         get_result_future.add_done_callback(self.rotate_result_callback)
 
     def rotate_feedback_callback(self, feedback_msg):
-        feedback = feedback_msg.feedback
+        feedback = feedback_msg.feedback            #nicht nötig
 
     def rotate_result_callback(self, future):
         result = future.result().result
@@ -215,8 +215,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-        
-
-
-
-
+    

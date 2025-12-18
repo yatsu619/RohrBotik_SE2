@@ -141,12 +141,14 @@ class RotateActionServer(Node):
         
         MINDEST_MARKER_DISTANZ = 2.0
         
-        if self.marker_gefunden and self.marker_distanz > MINDEST_MARKER_DISTANZ:
-            self.rotation_active = False
-            self.stop_motion()
-            self.done_event.set()
-            self.get_logger().info('Seerohr erkannt breche Rotation ab')
-            return
+        if self.marker_gefunden: 
+            if self.marker_distanz > MINDEST_MARKER_DISTANZ and self.marker_id == 0 or self.marker_id == 69:
+                self.rotation_active = False
+                self.stop_motion()
+                self.done_event.set()
+                self.get_logger().info('Seerohr erkannt breche Rotation ab')
+                return
+            return         #evtl. raus
 
         if self.count == 0:
             linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki =RotateCL500.rotate_to_pipe(self.current_pose.theta, self.inner_counter,self.gesetzter_wki )
