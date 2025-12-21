@@ -2,13 +2,20 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 #für eine bestimmte Reinfolge:
-from launch.actions import RegisterEventHandler
+from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.event_handlers import OnProcessStart
+from launch.substitutions import LaunchConfiguration
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 def generate_launch_description():
     
+    target_vel_arg = DeclareLaunchArgument(             #Parameter wird deklariert, damit der user diesen beim Starten des Launchfiles setzen kann
+        'target_vel',
+        description = 'Geschwindigkeit für die Linearfahrt in m/s: ',
+    )
+    
+    target_vel = LaunchConfiguration('target_vel')
 
     camera_node = Node(
         package='datagates',                     # Das Package, in dem die Node ist
@@ -18,21 +25,80 @@ def generate_launch_description():
  #      parameter=[{}]                           # Übergabeparameter, z.B.: 'video_device': '/dev/video0', 'image_size': [640, 480]
     )
 
-    subpub_node = Node(
-        package='datagates',  
-        executable='cam_subpub_Node', 
-        name='cam_subpub_Node',
-        output='screen'
-    )
-
-    register_subpub_handler = RegisterEventHandler(     # Event_händler: Starte subpub_node, wenn camera_node gestartet ist
-            OnProcessStart(
-                    target_action=camera_node,
-                    on_start=[subpub_node]
+    subpub_node_delayed = TimerAction(
+        period=1.0,
+        actions=[
+            Node(
+                package='datagates',
+                executable='cam_subpub_Node',
+                name='cam_subpub_Node',
+                output='screen'
             )
-    )     
+        ]
+    )
+    
+    # 4. Rotate Server (nach 2s)
+    rotate_node_delayed = TimerAction(
+        period=2.0,
+        actions=[
+            Node(
+                package='rotate_server',
+                executable='rotate_server_node',
+                name='rotate_server_node',
+                output='screen'
+            )
+        ]
+    )
+    
+    # 5. Move Server (nach 3s)
+    move_node_delayed = TimerAction(
+        period=3.0,
+        actions=[
+            Node(
+                package='move_server',
+                executable='move_server_node',
+                name='move_server_node',
+                output='screen'
+            )
+        ]
+    )
+    
+    # 6. Handler Server (nach 4s)
+    handler_node_delayed = TimerAction(
+        period=4.0,
+        actions=[
+            Node(
+                package='action_server_handler',
+                executable='handler_node',
+                name='handler_node',
+                output='screen'
+            )
+        ]
+    )
+    
+    # 7. Action Goal (nach 7s)
+    start_mission = TimerAction(
+        period=7.0,
+        actions=[
+            ExecuteProcess(
+                cmd=[
+                    'ros2', 'action', 'send_goal',
+                    '/handler',
+                    'interfaces/action/HandlerAc',
+                    ['{target_vel: ', target_vel, '}']
+                ],
+                output='screen'
+            )
+        ]
+    )
+    
 
     return LaunchDescription([
-        camera_node,
-        register_subpub_handler
+        target_vel_arg,      
+        camera_node,              # 0s
+        subpub_node_delayed,      # 1s
+        rotate_node_delayed,      # 2s
+        move_node_delayed,        # 3s
+        handler_node_delayed,     # 4s
+        start_mission,            # 7s
     ])
