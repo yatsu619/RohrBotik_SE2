@@ -5,22 +5,14 @@ import cv2 as cv
 import cv2.aruco as aruco
 import numpy as np 
 
-
-# **********************Code und Logic Beschreibung ********************* 
-
-"""
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Kommentar des Verlorenen @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-Bis jetzt baut die Logik darauf auf das immer nur ein ArUco marker im bild sein darf... da wir ja nciht mehr die id übergeben. 
-Das sollte man der schönheit nochmal überdenken. TODO
-
-"""
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ cam_data_logic.py only @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 class VisionProcessor:
     def __init__(self):
         """
-        Wichtig, je nach eingestellter Kamera müssen hier die Werte für die Kamera-Konstanten geändert werden!!!
+        Die Klasse VisionProcessor ist das Herzstück der Kameralogic. 
+        Hier werden in den Instanzvariablen die wichtigsten Informationen der gefunden Marker, als auch Konstanzen bezüglich der Kamera und Physischer Markergrößen gespeichert.
+        Die eigentiche Auswertung passiert in der Funkion "find_ArUco"
         """
         self.check_grayframe = None
         self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
@@ -30,34 +22,51 @@ class VisionProcessor:
 #Marker infos
         self.marker_gefunden = False
         self.marker_id = None
-        self.marker_mittelpunkt = None #(mit x,y)
+        self.marker_mittelpunkt = None 
         self.marker_distanz = None
         self.marker_groesse_pixel = None
         self.marker_winkel = None
 
 #Konstanten der Rasberry Py Camera REV 1.3 // Sensor OmniVision OV5647
 
-        self.MARKER_GROESSE_CM_STANDARD = 17.5       #Große des Markers in CM pyhsisch messen und eintragen! Von Rand zu Rand! als Standardwert.
+        self.MARKER_GROESSE_CM_STANDARD = 17.5       
         self.MARKER_GROESSEN = {
             0:17.5,
-            69:7.5,                                   #TODO: id : Größe in CM // muss noch eingetragen werden, wenn der Marker festgelegt ist.
+            69:7.5,                                   
         }
         
-        self.KAMERA_BRENNWEITE = 618        #TODO:  zwischen 500 und 700, muss Kalibriert werden --> def kalibriere_brennweite(self):
+        self.KAMERA_BRENNWEITE = 618        
 
-        self.KAMERA_Breite_Pixel = 640      #TODO:  Oder je nach Einstellung 1280 oder 1920
-        self.KAMERA_Hoehe_Pixel = 480       #TODO:  Oder je nach Einstellung 720 oder 1080
-        self.KAMERA_Sichtfeld_GRAD = 53.5   #TODO:  53.5 -> bei 640x480 // 62.2 -> 1280x720 // 62.2 -> 1920x1080 
+        self.KAMERA_Breite_Pixel = 640      
+        self.KAMERA_Hoehe_Pixel = 480       
+        self.KAMERA_Sichtfeld_GRAD = 53.5    
 
 
 
     def find_ArUco(self, gray_frame):
         """
-        Suchen nach einer Spezifischer Marker-ID.
+        Die Funktion wird in der cam_subpub_Node aufgerufen und das aktuellste Graubild wird übergeben. 
 
-        Prüft alle Marker im Bild und speichert dann gewisse Daten des "wanted-id" - Markers
+        Das Bild wird nach ArUco Marker durchsucht und gibt die relevantesten Informationen des NAHELIEGENSTEN Marker aus.
 
- @@@@@@@@@@ -> Koordinatensystem des Frames:   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        Funktion/Ablauf: 
+
+        Bei Aufruf der Funktion werden alle Instanzvariablen wieder auf 0 gesetzt.
+        Über .detectMarkers werden alle geichteten Marker Ids sowie deren Eckpunkte gespeichert.
+
+        Dann wird der Marker anhand der größten Pixel-Kantenlänge ermittelt und als relevanter Marker weiter verarbeitet.
+        Aus den Eckpunkten wird dann der Mittelpunkt des Markers auf dem Bild in Abhängigkeit vom Nullpunkt des Bildschirms ermittelt
+        In einer eigenen Funktion wird der Winkel von Kameramitte zum Markermittelpunkt berechnet.
+        Über die bereits berechnete Pixel-Kantenlänge sowie phyischer Konstanten von Kamera und ArUco-Markern ergibt sich dann die Distanz von Kamera zum ArUco Mittelpunkt
+
+        Nur wenn mindestens ein Marker gefunden wurde, gibt die Funktion True zurück.
+        Die in den Instanzvariablen gesamelten Informationen werden durch die Vererbung an die cam_subpub_Node und von dort per Custom-Message an die Actionserver weiter gegeben.
+
+        
+        
+        Visuelle Zusatzinfos bezüglich der detectMarkers:
+
+            -> Koordinatensystem des Frames:   
 
                 (0,0) ──────────────────────────────► X
                 │
@@ -68,12 +77,7 @@ class VisionProcessor:
                 │
                 ▼ Y
         
-@@@@@@@@@@@ -> Strucktur von detectMarkers(corners):   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        
-        corners[i]       # Marker Nummer i (z.B. der erste Marker)
-        corners[i][0]    # Die Ecken dieses Markers (wir schneiden eine Dimension weg)
-        corners[i][0][0] # Die erste Ecke (oben links)
-
+            -> Strucktur von detectMarkers(corners):  
 
             corners = [
                 # Erster Marker (z.B. ID 0)
@@ -99,7 +103,7 @@ class VisionProcessor:
             ids = [[0], [5]]  # IDs der gefundenen Marker
                     
         """
-#Resett für erneuten Aufruf der Funktion
+
         self.marker_gefunden = False
         self.marker_id = None
         self.marker_mittelpunkt = None
@@ -114,24 +118,36 @@ class VisionProcessor:
         if ids is None:
             return False
         
-#suche  
-        detected_id = ids[0][0]                         #Da ids ein array, brauchen wir nur den ersten marker und die erste info "marker id"
-        print(f"Gefundene Marker: {detected_id}")
+#suche   
+
+        nearest_marker_id = None
+        biggest_Sidelength = 0
+
+        for i in range(len(ids)):
+            ecken = corners[i][0]
+
+            breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors]
+            hoehe = np.linalg.norm(ecken[1] - ecken[2])
+            sidelength = (breite + hoehe)/2                     # DURCHSCHNITTLICHEN KANTENLÄNGE, da zerzerrung möglich
+
+            if sidelength > biggest_Sidelength:
+                biggest_Sidelength = sidelength
+                nearest_marker_id = ids[i]
+
+        self.marker_id = int(nearest_marker_id)
+        print(f"Gefundenen Marker: {nearest_marker_id}")
         self.marker_gefunden = True
-        self.marker_id = int(detected_id)               # das int(...) ist um den numpy.int32 in den ROS int32 umzuwandeln
-                
-        ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
-                
+        
+        ecken = corners[self.marker_id][0]
+
         self.marker_mittelpunkt = (
-            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> ... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
+            np.mean(ecken[:,0]),        #x            z.B.   200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
             np.mean(ecken[:,1])         #y                
         )
 
-        self.marker_winkel = self._berechne_winkel()    
-            
-        breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
-        hoehe = np.linalg.norm(ecken[1] - ecken[2])
-        self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # Berechnung der DURCHSCHNITTLICHEN KANTENLÄNGE, da der WÜRFEL dennoch druch zerzerrung ungleiche Werte haben könnte.
+        self.marker_kantenlaenge_pixel = biggest_Sidelength
+
+        self.marker_winkel = self._berechne_winkel() 
 
 
         self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(self.marker_id, self.MARKER_GROESSE_CM_STANDARD )
@@ -139,6 +155,7 @@ class VisionProcessor:
 
         return True
             
+
 
     
 
@@ -150,12 +167,13 @@ class VisionProcessor:
         Logik: 
             Pixel_abweichung = Anzahld er Pixel zwischen Bildmittelpunkt und Mitte-ArUco-Marker
             Grad_pro_Pixel = Rechnet aus dem Winkel der Linse und der Bildbreite in Pixeln die Gradzahl für ein Pixel aus
-            Winkel in Grad = Abweichung in Pixeln mal Grad pro Pixel 
+            Winkel in Grad = Abweichung in Pixeln mal Grad pro Pixel. 
+            Bei einem Positiven Winkel dreht sich der Bot richtung Links 
         """
         marker_x = self.marker_mittelpunkt[0]
         bild_mitte_x = self.KAMERA_Breite_Pixel / 2
 
-        pixel_abweichung_x = bild_mitte_x - marker_x                                # Hier schwachstelle, es wird je nach berechnung ein Positiver oder ein negativer Wert ausgeben. 
+        pixel_abweichung_x = bild_mitte_x - marker_x                                
 
         grad_pro_pixel = self.KAMERA_Sichtfeld_GRAD / self.KAMERA_Breite_Pixel
         winkel_grad = pixel_abweichung_x * grad_pro_pixel
@@ -164,11 +182,31 @@ class VisionProcessor:
 
 
 
-
-
-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-# *************************** Test Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
+'''
+Wird erst gelöscht, wenn die verbesserte CAM_Logic getestet wurde!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! §$%%§$%§%§§$%%§%&§$%§$%§$%
 
 
 
+   detected_id = ids[0][0]                         #Da ids ein array, brauchen wir nur den ersten marker und die erste info "marker id"
+        print(f"Gefundene Marker: {detected_id}")
+        self.marker_gefunden = True
+        self.marker_id = int(detected_id)               # das int(...) ist um den numpy.int32 in den ROS int32 umzuwandeln
+                
+        ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
+                
+        self.marker_mittelpunkt = (
+            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> ... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
+            np.mean(ecken[:,1])         #y                
+        )
+       self.marker_winkel = self._berechne_winkel()    
+            
+        breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
+        hoehe = np.linalg.norm(ecken[1] - ecken[2])
+        self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # DURCHSCHNITTLICHEN KANTENLÄNGE, da zerzerrung möglich
+
+
+        self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(self.marker_id, self.MARKER_GROESSE_CM_STANDARD )
+        self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
+
+        return True
+'''

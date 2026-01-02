@@ -1,5 +1,4 @@
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32, Bool, Int32 # War für die Quicklösung
 from cv_bridge import CvBridge
 import numpy as np
 import cv2 
@@ -15,6 +14,19 @@ from cam_msgs.msg import MarkerInfo
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ROS2 - SupPubNode - Zuständig für alle  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 class Camera_data(Node):
+    '''
+    Die SupPubNode ist als Hauptverteiler der Kameradaten zuständig. 
+    Sie subscript die CameraOutPutNode und empfängt jedes eingehende Graubild.
+    Dieses Bild wird dann per Funktion "find_ArUco" in einer VisionProcessor-Instanz verarbeitet. 
+    Während der Verarbeitung eines gefundenen Markers werden die wichtigsten Informationen herrausgefiltert und über eine Custom-Message hier weiter gepublished.
+    Die Custom-Message besteht aus: 
+    >  bool marker_found
+    >  float32 marker_distanz
+    >  float32 marker_winkel
+    >  int32 marker_id
+    Grundlegend gibt die Funktion "find_ArUco" bei einem gefunden und ausgewertetem ArUco Marker ein True zurück. Wird kein Marker im Bild gefunden oder ist das Bild fehlerhaft, wird False zurück gegeben.
+    Gibt "find_ArUco" ein False zurück, werden die relevanten Variablen auf False oder 0 gesetzt und per Custom-Message gepublished. Andernfalls werden nach jedem Aufruf (fehlerfrei 24 mal die Sekunde) die Werte des aktuellen relevanten ArUco Markers weitergeben.  
+    '''
     def __init__(self):
         super().__init__('cam_sup_pub')
         self.bridge = CvBridge()
@@ -40,7 +52,6 @@ class Camera_data(Node):
     def frame_callback(self, msg):
         self.gray_frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
 
-#Bild da?
 
         if self.gray_frame is not None:
             self.get_logger().info("Graubild bei SubPub angekommen!")
@@ -66,7 +77,7 @@ class Camera_data(Node):
         marker_found = self.vp.marker_gefunden
 
      
-        msg_out = MarkerInfo() #TODO custommessage von Yatheesh
+        msg_out = MarkerInfo()
         msg_out.marker_found = marker_found
         msg_out.marker_winkel = marker_winkel
         msg_out.marker_distanz = marker_distanz
@@ -80,8 +91,6 @@ class Camera_data(Node):
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-# ***************************  Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
-
 def main(args=None):
     rclpy.init(args=args)
     cam_sub_pub = Camera_data()
@@ -91,36 +100,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main() 
-
-
-
-    """
-# @@@@@@@@@@@@@@@@   AB hier quick&Dirty lösung für nur zwei publisher   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-        if not self.vp.find_ArUco(self.gray_frame):
-            self.get_logger().info("Es wurde kein Marker gefunden, oder zu viele...")
-        else:
-            marker_found = self.vp.marker_gefunden
-            marker_winkel = self.vp.marker_winkel
-
-            msg_winkel = Float32()
-            msg_winkel.data = float(marker_winkel)
-            self.pub_winkel.publish(msg_winkel)
-            self.get_logger().info("winkel is raus")
-        
-            msg_found = Bool()
-            msg_found.data = marker_found
-            self.pub_marker_seh.publish(msg_found)
-            self.get_logger().info("Marker gefunden")
-
-            self.pub_winkel = self.create_publisher(
-            Float32,
-            'winkel_info', 
-            10
-        )
-        self.pub_marker_seh = self.create_publisher(
-            Bool,
-            'found_marker',
-            10
-        )
- """

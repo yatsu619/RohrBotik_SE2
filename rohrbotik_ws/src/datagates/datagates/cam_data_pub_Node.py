@@ -5,22 +5,26 @@ import cv2 as cv
 import rclpy
 from rclpy.node import Node
 
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ROS2 - Publisher_cam @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
 class CameraOutPut(Node):
+
+    '''
+    Die CameraOutPut Node ist als eigenständige ROS2 Node für Aufnehme, umwandlung in Grauwerte und weitergabe der Kamerabilder zuständig. 
+    Die als Numpy-Array ankommenden cv2 Bilder werden erst zu grauwerten berechnet und dann über die Bridge in ein passendes ROS2 Format convertiert. 
+    Auf das Topic "pycam_tb3" werden pro sekunde 24 Bilder gepublished.
+    '''
     def __init__(self):
-        super().__init__('camera_read_out') #Node-bennenung
+        super().__init__('camera_read_out')
         self.publisher = self.create_publisher(
             Image, 
             'pycam_tb3', 
             10
-        ) # die ,10) ist die Zwischenspeicher-menge für Bilder in der Node-Warteschlange
+        )
         
-        self.camera = cv.VideoCapture(0)                                    #Kamera-Index hier anpassen  evt mit /dev/video0
-        #self.camera.set(cv.CAP_PROP_FRAME_WIDTH, 1920)                      #Eisntellung von Default(640x480) auf (1920x1080)
-        #self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)                     #Einstellung von Default auf HighRes
-        self.bridge = CvBridge()                                            #Hier, weil sonst die Kamera bei jedem def timer_callback aufgerufen werden würde
+        self.camera = cv.VideoCapture(4)                                    
+        self.bridge = CvBridge()
         self.timer = self.create_timer(1/24, self.timer_callback)
 
     def timer_callback(self):
@@ -36,8 +40,6 @@ class CameraOutPut(Node):
 
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-# *************************** Test Main (alle Nodes sollten am Ende, zentral aus einer Datei gestartet werden) ******************************
 
 def main(args=None):
     rclpy.init(args=args)
