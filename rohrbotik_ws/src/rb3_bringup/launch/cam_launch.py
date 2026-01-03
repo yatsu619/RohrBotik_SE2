@@ -91,6 +91,19 @@ def generate_launch_description():
             )
         ]
     )
+
+    #8. distance_poti(nach 8s)
+    activate_poti = TimerAction(
+        period=8.0,
+        actions=[
+            Node(
+                package='distance_pub',
+                executable='distance_pub',
+                name='distance_pub',
+                output='screen'
+            )
+        ]
+    )
     
 
     return LaunchDescription([
@@ -101,4 +114,5 @@ def generate_launch_description():
         move_node_delayed,        # 3s
         handler_node_delayed,     # 4s
         start_mission,            # 7s
+        activate_poti,            # 8s
     ])
