@@ -47,9 +47,9 @@ class MoveActionServer(Node):
                                                     callback_group = self.callback_group)
         
         self.abstand_sub = self.create_subscription(Float32, 
-                                                    '/Abstand',
+                                                    'Distanz_poti',
                                                     self.abstand_callback,
-                                                    10,
+                                                    5,
                                                     callback_group = self.callback_group)
         
         self.get_logger().info('Move Action Server wurde gestartet')
@@ -79,7 +79,7 @@ class MoveActionServer(Node):
     
     def abstand_callback(self, msg: Float32):
         '''Empfängt Soll-Abstand vom Topic /Abstand'''
-        self.soll_abstand = max(0.2, min(1.0, msg.data))
+        self.soll_abstand = msg.data
         self.get_logger().info(f'Neuer Soll-Abstand: {self.soll_abstand:.2f}m (empfangen: {msg.data:.2f}m)')
     
 

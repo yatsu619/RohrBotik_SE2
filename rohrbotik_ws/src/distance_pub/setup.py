@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rotate_server'
+package_name = 'distance_pub'
 
 setup(
     name=package_name,
@@ -13,8 +13,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='yatheesh',
-    maintainer_email='yatheesh@todo.todo',
+    maintainer='pa99',
+    maintainer_email='patrice.wenzig@stud.hs-kempten.de',
     description='TODO: Package description',
     license='TODO: License declaration',
     extras_require={
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rotate_server_node = rotate_server.rotate_action_server:main'
+            'distance_pub = distance_pub.distance_pub:main',
         ],
     },
 )
