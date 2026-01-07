@@ -14,6 +14,8 @@ class CameraOutPut(Node):
     Die CameraOutPut Node ist als eigenständige ROS2 Node für Aufnehme, umwandlung in Grauwerte und weitergabe der Kamerabilder zuständig. 
     Die als Numpy-Array ankommenden cv2 Bilder werden erst zu grauwerten berechnet und dann über die Bridge in ein passendes ROS2 Format convertiert. 
     Auf das Topic "pycam_tb3" werden pro sekunde 24 Bilder gepublished.
+
+    Wird einzig für "move_action_server", Zeile 80, "def abstand_callback" verwendet.
     '''
     def __init__(self):
         super().__init__('camera_read_out')
@@ -23,7 +25,7 @@ class CameraOutPut(Node):
             10
         )
         
-        self.camera = cv.VideoCapture(4)                                    
+        self.camera = cv.VideoCapture(0)                                    
         self.bridge = CvBridge()
         self.timer = self.create_timer(1/24, self.timer_callback)
 

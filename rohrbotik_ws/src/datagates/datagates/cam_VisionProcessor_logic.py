@@ -1,4 +1,3 @@
-
 # ********************** Imports ********************* 
 
 import cv2 as cv
@@ -52,12 +51,10 @@ class VisionProcessor:
         Funktion/Ablauf: 
 
         Bei Aufruf der Funktion werden alle Instanzvariablen wieder auf 0 gesetzt.
-        Über .detectMarkers werden alle geichteten Marker Ids sowie deren Eckpunkte gespeichert.
+        Über .detectMarkers werden alle gesichteten Marker Ids sowie deren Eckpunkte gespeichert.
 
-        Dann wird der Marker anhand der größten Pixel-Kantenlänge ermittelt und als relevanter Marker weiter verarbeitet.
-        Aus den Eckpunkten wird dann der Mittelpunkt des Markers auf dem Bild in Abhängigkeit vom Nullpunkt des Bildschirms ermittelt
-        In einer eigenen Funktion wird der Winkel von Kameramitte zum Markermittelpunkt berechnet.
-        Über die bereits berechnete Pixel-Kantenlänge sowie phyischer Konstanten von Kamera und ArUco-Markern ergibt sich dann die Distanz von Kamera zum ArUco Mittelpunkt
+        Nun werden in einer For-Schleife für alle im Ids-index vorliegenden Marker, erst die Pixel-Seitenlänge und dann die Distanz in Metern von Kamera zum physischen Marker berechnet. 
+        Der der kamera naheliegenste Marker wird weiter analysiert. Der Mittelpunkt des Markers im Bild sowie der Winkel werden berechnet und in die Instanzvariablen geschrieben.
 
         Nur wenn mindestens ein Marker gefunden wurde, gibt die Funktion True zurück.
         Die in den Instanzvariablen gesamelten Informationen werden durch die Vererbung an die cam_subpub_Node und von dort per Custom-Message an die Actionserver weiter gegeben.
@@ -120,8 +117,9 @@ class VisionProcessor:
         
 #suche   
 
-        nearest_marker_id = None
-        biggest_Sidelength = 0
+        nearest_marker_id = 0
+        nearest_marker_distanz = 100.0
+        nearest_marker_index = 0
 
         for i in range(len(ids)):
             ecken = corners[i][0]
@@ -130,28 +128,32 @@ class VisionProcessor:
             hoehe = np.linalg.norm(ecken[1] - ecken[2])
             sidelength = (breite + hoehe)/2                     # DURCHSCHNITTLICHEN KANTENLÄNGE, da zerzerrung möglich
 
-            if sidelength > biggest_Sidelength:
-                biggest_Sidelength = sidelength
-                nearest_marker_id = ids[i]
 
-        self.marker_id = int(nearest_marker_id)
+            marker_probe_id = int(ids[i])
+            self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(marker_probe_id, self.MARKER_GROESSE_CM_STANDARD )
+            
+            marker_probe_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / sidelength) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
+
+            if marker_probe_distanz < nearest_marker_distanz:
+                nearest_marker_distanz = marker_probe_distanz
+                nearest_marker_id = marker_probe_id
+                nearest_marker_index = i
+            
+
+        self.marker_distanz = nearest_marker_distanz
+
+        self.marker_id = nearest_marker_id
         print(f"Gefundenen Marker: {nearest_marker_id}")
         self.marker_gefunden = True
-        
-        ecken = corners[self.marker_id][0]
+
+        ecken = corners[nearest_marker_index][0]
 
         self.marker_mittelpunkt = (
             np.mean(ecken[:,0]),        #x            z.B.   200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
             np.mean(ecken[:,1])         #y                
         )
 
-        self.marker_kantenlaenge_pixel = biggest_Sidelength
-
         self.marker_winkel = self._berechne_winkel() 
-
-
-        self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(self.marker_id, self.MARKER_GROESSE_CM_STANDARD )
-        self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
 
         return True
             
@@ -179,34 +181,4 @@ class VisionProcessor:
         winkel_grad = pixel_abweichung_x * grad_pro_pixel
 
         return winkel_grad
-
-
-
-'''
-Wird erst gelöscht, wenn die verbesserte CAM_Logic getestet wurde!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! §$%%§$%§%§§$%%§%&§$%§$%§$%
-
-
-
-   detected_id = ids[0][0]                         #Da ids ein array, brauchen wir nur den ersten marker und die erste info "marker id"
-        print(f"Gefundene Marker: {detected_id}")
-        self.marker_gefunden = True
-        self.marker_id = int(detected_id)               # das int(...) ist um den numpy.int32 in den ROS int32 umzuwandeln
-                
-        ecken = corners[0][0]                           # durch [i] [0] holen wir uns aus dem 3dimensionlaen Array nur den ersten Marker und die darin liegenden 4 Ecken [x,y]
-                
-        self.marker_mittelpunkt = (
-            np.mean(ecken[:,0]),        #x            z.B.  ecken = [[200,80], [250,80], [250,130], [200,130]]  --> ... also 200 + 250 + 250 + 200 / 4 für den Durchschnittswert auf der X-Achse
-            np.mean(ecken[:,1])         #y                
-        )
-       self.marker_winkel = self._berechne_winkel()    
-            
-        breite = np.linalg.norm(ecken[0] - ecken[1])        # np.linalg.norm() in PIXELN--> √(x² + y²)  [ausrechnen der länge des Vektors] z.B. --> ecken [0] = [200, 80] (oben links) & ecken [1] = [250, 80] (oben rechts) => [200-250, 80-80] =  [-50, 0] np.linalg.norm(-50, 0) = √(-50² + 0²) = 50 pixel breit
-        hoehe = np.linalg.norm(ecken[1] - ecken[2])
-        self.marker_kantenlaenge_pixel = (breite + hoehe)/2      # DURCHSCHNITTLICHEN KANTENLÄNGE, da zerzerrung möglich
-
-
-        self.MARKER_GROESSE_CM = self.MARKER_GROESSEN.get(self.marker_id, self.MARKER_GROESSE_CM_STANDARD )
-        self.marker_distanz = ((self.MARKER_GROESSE_CM * self.KAMERA_BRENNWEITE) / self.marker_kantenlaenge_pixel) / 100.0   # Forml der Physik --> Distanz = (Echte_Größe × Brennweite) / Pixel_Größe   --> die /100 sind für die umrechnug von cm zu m
-
-        return True
-'''
+    

@@ -24,6 +24,7 @@ class MoveActionServer(Node):
         self.marker_distanz = 0.0
         self.marker_winkel = 0.0
         self.marker_id = 0
+        self.abstand_topic_empfangen = False
         self.soll_abstand = 0.5             
 
         self.control_timer = self.create_timer(0.1, 
@@ -47,9 +48,9 @@ class MoveActionServer(Node):
                                                     callback_group = self.callback_group)
         
         self.abstand_sub = self.create_subscription(Float32, 
-                                                    '/Abstand',
+                                                    'Distanz_poti',
                                                     self.abstand_callback,
-                                                    10,
+                                                    5,
                                                     callback_group = self.callback_group)
         
         self.get_logger().info('Move Action Server wurde gestartet')
@@ -79,7 +80,8 @@ class MoveActionServer(Node):
     
     def abstand_callback(self, msg: Float32):
         '''Empfängt Soll-Abstand vom Topic /Abstand'''
-        self.soll_abstand = max(0.2, min(1.0, msg.data))
+        self.abstand_topic_empfangen = True
+        self.soll_abstand = msg.data
         self.get_logger().info(f'Neuer Soll-Abstand: {self.soll_abstand:.2f}m (empfangen: {msg.data:.2f}m)')
     
 
@@ -144,6 +146,10 @@ class MoveActionServer(Node):
             """ Wir prüfen ob wir den marker sehen und wenn nicht warten wir bis wir ihn 12 mal nicht sehen bevor wir stehen bleiben bei 24Hz entspricht 12 einer halben sekunde """
             self.stop_motion()
             self.get_logger().info(f'Keine Sicht,Keine Fahrt ')
+        
+        if not self.abstand_topic_empfangen:
+            self.get_logger().info('Nutze Default-Abstand 0.5m (kein Topic empfangen)')
+            
 
         cmd = Twist()
         '''Geschwindigkeit publishen'''

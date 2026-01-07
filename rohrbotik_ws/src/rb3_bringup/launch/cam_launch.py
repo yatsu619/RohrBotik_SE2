@@ -12,6 +12,7 @@ def generate_launch_description():
     
     target_vel_arg = DeclareLaunchArgument(             #Parameter wird deklariert, damit der user diesen beim Starten des Launchfiles setzen kann
         'target_vel',
+        default_value = '0.12',
         description = 'Geschwindigkeit für die Linearfahrt in m/s: ',
     )
     
@@ -78,15 +79,29 @@ def generate_launch_description():
     
     # 7. Action Goal (nach 7s)
     start_mission = TimerAction(
-        period=7.0,
+        period=10.0,
         actions=[
             ExecuteProcess(
                 cmd=[
-                    'ros2', 'action', 'send_goal',
-                    '/handler',
-                    'interfaces/action/HandlerAc',
-                    ['{target_vel: ', target_vel, '}']
+                    'bash', '-c',
+                    ['ros2 action send_goal /handler interfaces/action/HandlerAc "\\{target_vel: ', 
+                     target_vel,
+                     ' \\}"']
                 ],
+                output='screen',
+                
+            )
+        ]
+    )
+
+    #8. distance_poti(nach 8s)
+    activate_poti = TimerAction(
+        period=11.0,
+        actions=[
+            Node(
+                package='distance_pub',
+                executable='distance_pub',
+                name='distance_pub',
                 output='screen'
             )
         ]
@@ -101,4 +116,5 @@ def generate_launch_description():
         move_node_delayed,        # 3s
         handler_node_delayed,     # 4s
         start_mission,            # 7s
+        activate_poti,            # 8s
     ])

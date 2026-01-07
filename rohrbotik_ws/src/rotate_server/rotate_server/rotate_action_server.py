@@ -136,7 +136,7 @@ class RotateActionServer(Node):
                 self.done_event.set()
                 self.get_logger().info('Seerohr erkannt breche Rotation ab')
                 return
-            return         #evtl. raus
+            #return         #evtl. raus
 
         if self.count == 0:
             linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki =RotateCL500.rotate_to_pipe(self.marker_winkel, self.inner_counter,self.gesetzter_wki )
@@ -166,7 +166,7 @@ class RotateActionServer(Node):
         self.cmd_pub.publish(cmd_aktuell)
 
         feedback_msg = RotateAc.Feedback()
-        feedback_msg.start_winkel = self.current_pose.theta
+        #feedback_msg.start_winkel = self.current_pose.theta
         self.current_goal_handle.publish_feedback(feedback_msg)
 
     def stop_motion(self):
