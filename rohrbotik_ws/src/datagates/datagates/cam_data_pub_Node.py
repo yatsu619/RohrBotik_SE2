@@ -25,7 +25,7 @@ class CameraOutPut(Node):
             10
         )
         
-        self.camera = cv.VideoCapture(4)                                    
+        self.camera = cv.VideoCapture(0)                                    
         self.bridge = CvBridge()
         self.timer = self.create_timer(1/24, self.timer_callback)
 
