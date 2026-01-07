@@ -49,7 +49,9 @@ class MoveActionServer(Node):
         
         self.abstand_sub = self.create_subscription(Float32, 
                                                     'Distanz_poti',
+                                                    'Distanz_poti',
                                                     self.abstand_callback,
+                                                    5,
                                                     5,
                                                     callback_group = self.callback_group)
         
