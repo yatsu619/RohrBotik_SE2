@@ -130,13 +130,19 @@ class RotateActionServer(Node):
         MINDEST_MARKER_DISTANZ = 2.0
         
         if self.marker_gefunden: 
-            if self.marker_distanz > MINDEST_MARKER_DISTANZ and self.marker_id == 0 or self.marker_id == 69:
+            if self.marker_id == 0 and self.marker_distanz > MINDEST_MARKER_DISTANZ:
                 self.rotation_active = False
                 self.stop_motion()
                 self.done_event.set()
-                self.get_logger().info('Seerohr erkannt breche Rotation ab')
+                self.get_logger().info('Marker 0 in Reichweite, Drehung beendet!')
                 return
-            #return         #evtl. raus
+            
+            elif self.marker_id == 69:
+                self.rotation_active = False
+                self.stop_motion()
+                self.done_event.set()
+                self.get_logger().info('Marker 69 erkannt, Drehung beendet!')
+                return
 
         if self.count == 0:
             linear_vel, angular_vel, gedreht_janein,self.gesetzter_wki =RotateCL500.rotate_to_pipe(self.marker_winkel, self.inner_counter,self.gesetzter_wki )
@@ -187,12 +193,13 @@ def main(args=None):
     except KeyboardInterrupt:
         # Wenn Benutzer Ctrl+C drückt
         node.get_logger().info('Server unterbrochen')
+        node.stop_motion()
     except Exception as e:
         # Falls irgendein anderer Fehler auftritt
         node.get_logger().error(f'Unerwarteter Fehler: {e}')
+        node.stop_motion()
     finally:
         node.get_logger().info('Server wird beendet...')
-        node.stop_motion()  # Roboter stoppen
         node.destroy_node()  
         rclpy.shutdown() 
 

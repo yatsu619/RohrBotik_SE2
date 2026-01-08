@@ -1,7 +1,7 @@
 import math
 
 class  RotateCL500 :# patrice idee 'CL500'
-    _omega = 0.33 # Drehgeschwindigkeit 
+    _omega = 0.2 # Drehgeschwindigkeit 
     _angle_threshold = 0.01  
 
    

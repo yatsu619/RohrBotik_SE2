@@ -178,8 +178,8 @@ def main(args = None):
         executor.spin()
     except KeyboardInterrupt:
         node.get_logger().info('Server unterbrochen')
-    finally:
         node.stop_motion()
+    finally:
         node.destroy_node()
         rclpy.shutdown()
 

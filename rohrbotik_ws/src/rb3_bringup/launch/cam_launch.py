@@ -84,9 +84,9 @@ def generate_launch_description():
             ExecuteProcess(
                 cmd=[
                     'bash', '-c',
-                    ['ros2 action send_goal /handler interfaces/action/HandlerAc "\\{target_vel: ', 
+                    ['ros2 action send_goal /handler interfaces/action/HandlerAc "{target_vel: ', 
                      target_vel,
-                     ' \\}"']
+                     '}"']
                 ],
                 output='screen',
                 
@@ -97,19 +97,6 @@ def generate_launch_description():
     #8. distance_poti(nach 8s)
     activate_poti = TimerAction(
         period=11.0,
-        actions=[
-            Node(
-                package='distance_pub',
-                executable='distance_pub',
-                name='distance_pub',
-                output='screen'
-            )
-        ]
-    )
-
-    #8. distance_poti(nach 8s)
-    activate_poti = TimerAction(
-        period=8.0,
         actions=[
             Node(
                 package='distance_pub',
