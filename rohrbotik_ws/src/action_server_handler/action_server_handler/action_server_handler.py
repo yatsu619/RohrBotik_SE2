@@ -49,7 +49,6 @@ class HandlerActionServer(Node):
         else:
             self.get_logger().info('Rotate Server gefunden')
 
-    #TODO Es gibt keine abfrage ob der server gestartet ist. Ebensowenig gibt es eine sicherheit, die warnt oder meldet, wenn einer der server abstürtzt während d<s system läuft
         
     def goal_callback(self, goal_request):
         self.get_logger().info(f'Neues Handler-Goal: target_vel={goal_request.target_vel:.2f}m/s')
