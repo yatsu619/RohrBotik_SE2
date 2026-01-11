@@ -11,7 +11,7 @@ class VisionProcessor:
         """
         Die Klasse VisionProcessor ist das Herzstück der Kameralogic. 
         Hier werden in den Instanzvariablen die wichtigsten Informationen der gefunden Marker, als auch Konstanzen bezüglich der Kamera und Physischer Markergrößen gespeichert.
-        Die eigentiche Auswertung passiert in der Funkion "find_ArUco"
+        Die eigentiche Auswertung passiert in der Funkion "find_ArUco"8
         """
         self.check_grayframe = None
         self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)

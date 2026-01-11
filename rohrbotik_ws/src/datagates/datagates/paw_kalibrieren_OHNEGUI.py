@@ -48,15 +48,15 @@ import time
 
 # ==================== EINSTELLUNGEN ====================
 
-MARKER_ID = 0                    # Welchen Marker nutzt du?
-MARKER_GROESSE_CM = 10.0         # TODO: Mit Lineal messen!
-BEKANNTE_DISTANZ_CM = 100.0      # Marker genau 1 Meter entfernt platzieren!
+MARKER_ID = 0                    
+MARKER_GROESSE_CM = 10.0          
+BEKANNTE_DISTANZ_CM = 100.0      
 
-KAMERA_DEVICE = '/dev/video0'    # Standard
+KAMERA_DEVICE = '/dev/video0'    
 AUFLOESUNG = (640, 480)
 
-ANZAHL_MESSUNGEN = 10            # Wie viele Messungen?
-PAUSE_ZWISCHEN_MESSUNGEN = 2     # Sekunden zwischen Messungen
+ANZAHL_MESSUNGEN = 10            
+PAUSE_ZWISCHEN_MESSUNGEN = 2     
 
 # =======================================================
 
@@ -89,7 +89,7 @@ class KameraKalibriererHeadless:
         self.messungen = []
         
         print("\n" + "=" * 60)
-        print("KAMERA-KALIBRIERUNG (HEADLESS)")
+        print("KAMERA-KALIBRIERUNG")
         print("=" * 60)
         print(f"Marker-ID: {MARKER_ID}")
         print(f"Marker-Größe: {MARKER_GROESSE_CM} cm")
@@ -98,7 +98,7 @@ class KameraKalibriererHeadless:
         print(f"Tatsächliche Auflösung: {self.echte_breite}x{self.echte_hoehe}")
         
         if (self.echte_breite, self.echte_hoehe) != AUFLOESUNG:
-            print("⚠️  WARNUNG: Tatsächliche Auflösung weicht ab!")
+            print("WARNUNG: Tatsächliche Auflösung weicht ab!")
         
         print(f"Anzahl Messungen: {ANZAHL_MESSUNGEN}")
         print("=" * 60)
@@ -121,7 +121,7 @@ class KameraKalibriererHeadless:
         if success:
             self.echte_hoehe, self.echte_breite = test_frame.shape[:2]
         else:
-            print("⚠️  Konnte Auflösung nicht prüfen, nehme Einstellungen an")
+            print("Konnte Auflösung nicht prüfen, nehme Einstellungen an")
             self.echte_breite = AUFLOESUNG[0]
             self.echte_hoehe = AUFLOESUNG[1]
     
@@ -141,13 +141,13 @@ class KameraKalibriererHeadless:
         success, frame = self.camera.read()
         
         if not success:
-            print("   ✗ Fehler beim Frame lesen")
+            print("Fehler beim Frame lesen")
             return None
         
         # Frame-Größe anzeigen (nur bei erster Messung)
         if len(self.messungen) == 0:
             h, w = frame.shape[:2]
-            print(f"   Frame-Größe: {w}x{h} Pixel")
+            print(f"Frame-Größe: {w}x{h} Pixel")
         
         # Graustufen für ArUco
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -156,7 +156,7 @@ class KameraKalibriererHeadless:
         corners, ids, _ = self.detector.detectMarkers(gray)
         
         if ids is None:
-            print("   ✗ Kein Marker gefunden")
+            print("Kein Marker gefunden")
             return None
         
         # Suche unseren spezifischen Marker
@@ -168,14 +168,14 @@ class KameraKalibriererHeadless:
                 
                 mittelpunkt = (np.mean(ecken[:, 0]), np.mean(ecken[:, 1]))
                 
-                print(f"   ✓ Marker gefunden!")
-                print(f"     Mittelpunkt: ({mittelpunkt[0]:.1f}, {mittelpunkt[1]:.1f})")
-                print(f"     Pixel-Größe: {pixel_groesse:.1f}px")
-                print(f"     Brennweite: {brennweite:.1f}")
+                print(f" Marker gefunden!")
+                print(f" Mittelpunkt: ({mittelpunkt[0]:.1f}, {mittelpunkt[1]:.1f})")
+                print(f" pixel-Größe: {pixel_groesse:.1f}px")
+                print(f" Brennweite: {brennweite:.1f}")
                 
                 return brennweite
         
-        print(f"   ✗ Marker ID={MARKER_ID} nicht gefunden (andere IDs gesehen: {ids.flatten().tolist()})")
+        print(f" Marker ID={MARKER_ID} nicht gefunden (andere IDs gesehen: {ids.flatten().tolist()})")
         return None
     
     def run(self):
@@ -212,7 +212,7 @@ class KameraKalibriererHeadless:
         print("=" * 60)
         
         if len(self.messungen) == 0:
-            print("❌ Keine erfolgreichen Messungen!")
+            print("Keine erfolgreichen Messungen!")
             print("   → Prüfe ob Marker sichtbar ist")
             print("   → Prüfe Marker-ID")
             print("   → Prüfe Beleuchtung")
@@ -241,15 +241,15 @@ class KameraKalibriererHeadless:
         
         # Qualitäts-Check
         if len(self.messungen) < ANZAHL_MESSUNGEN * 0.7:
-            print(f"\n⚠️  WARNUNG: Nur {len(self.messungen)}/{ANZAHL_MESSUNGEN} Messungen erfolgreich!")
+            print(f"\n WARNUNG: Nur {len(self.messungen)}/{ANZAHL_MESSUNGEN} Messungen erfolgreich!")
             print("   → Marker war oft nicht sichtbar")
             print("   → Wiederhole Kalibrierung mit besserem Setup")
         elif std_abweichung > 20:
-            print("\n⚠️  WARNUNG: Hohe Standardabweichung!")
+            print("\nWARNUNG: Hohe Standardabweichung!")
             print("   → Marker war nicht stabil positioniert")
             print("   → Wiederhole Kalibrierung!")
         else:
-            print("\n✅ Gute Kalibrierung!")
+            print("\nGute Kalibrierung!")
             print(f"   {len(self.messungen)} erfolgreiche Messungen")
             print(f"   Niedrige Standardabweichung ({std_abweichung:.1f})")
 
@@ -259,9 +259,9 @@ def main():
         kalibrierer = KameraKalibriererHeadless()
         kalibrierer.run()
     except KeyboardInterrupt:
-        print("\n\n⚠️  Abgebrochen durch Benutzer")
+        print("\n\n  Abgebrochen durch Benutzer")
     except Exception as e:
-        print(f"\n❌ FEHLER: {e}")
+        print(f"\n FEHLER: {e}")
 
 
 if __name__ == '__main__':
