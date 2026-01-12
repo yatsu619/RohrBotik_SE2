@@ -13,6 +13,7 @@ class Distance(Node):
 
     Befehl zur Änderung im Terminal:
     > ros2 param set /distance_publisher target_distance 0.8
+    > "ros2 param set /distance_publisher poti 0.8" [einer von den beiden]
 
     '''
     def __init__(self):
@@ -25,15 +26,30 @@ class Distance(Node):
         self.declare_parameter('poti', 0.5)
         self.timer = self.create_timer(0.1, self.timer_callback)
 
-
-
     def timer_callback(self):
         abstand = self.get_parameter('poti').value
-        abstand = min(1.0, max(0.2, abstand))           # alte verison: max(1.0, min(0.2, abstand)) gibt immer 1.0 zurück
+        abstand = clamp_distance(abstand, self.get_logger())
 
         msg = Float32()
         msg.data = abstand
         self.publisher.publish(msg)
+
+def clamp_distance(value, logger=None, min_val=0.2, max_val=1.0):
+    """
+    Begrenzt den Abstand auf erlaubten Bereich.
+    Loggt eine Warnung wenn der Wert korrigiert wurde.
+    """
+    if value > max_val:
+        if logger:
+            logger.warn(f'Wert {value} zu groß! Begrenzt auf {max_val}')
+        return max_val
+    
+    if value < min_val:
+        if logger:
+            logger.warn(f'Wert {value} zu klein! Begrenzt auf {min_val}')
+        return min_val
+    
+    return value
 
 
 

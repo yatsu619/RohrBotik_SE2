@@ -56,7 +56,7 @@ class Camera_data(Node):
         if self.gray_frame is not None:
             self.get_logger().info("Graubild bei SubPub angekommen!")
         else:
-            self.get_logger().info("Da knallts an der Kreuzung gewaltig")
+            self.get_logger().info("Kein Bild bei SubPub angekommen")
 
 
 #Visionprocessor arbeitet

@@ -9,9 +9,9 @@ import numpy as np
 class VisionProcessor:
     def __init__(self):
         """
-        Die Klasse VisionProcessor ist das Herzstück der Kameralogic. 
-        Hier werden in den Instanzvariablen die wichtigsten Informationen der gefunden Marker, als auch Konstanzen bezüglich der Kamera und Physischer Markergrößen gespeichert.
-        Die eigentiche Auswertung passiert in der Funkion "find_ArUco"8
+        Die Klasse VisionProcessor ist das Gehirn der Kameralogik. 
+        Hier werden in den Instanzvariablen die wichtigsten Informationen der gefunden Marker, als auch Konstanten bezüglich der Kamera und Physischer Markergrößen gespeichert.
+        Die eigentiche Auswertung passiert in der Funkion "find_ArUco"
         """
         self.check_grayframe = None
         self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
@@ -118,7 +118,7 @@ class VisionProcessor:
 #suche   
 
         nearest_marker_id = 0
-        nearest_marker_distanz = 100.0
+        nearest_marker_distanz = 999.0
         nearest_marker_index = 0
 
         for i in range(len(ids)):
