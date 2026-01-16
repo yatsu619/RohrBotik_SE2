@@ -11,7 +11,7 @@ class PID:
 
     @staticmethod
     def zur_mitte_regeln(aktueller_winkel,soll_geschwindigkeit_linear ):
-         """
+        """
         Berechnet die Steuerung, um den Roboter auf den Sollwinkel (Mitte) auszurichten.
         Args:aktueller_winkel (float): Aktuell gemessener Winkel [Grad].
             soll_geschwindigkeit_linear (float): Vorgabe für die lineare Geschwindigkeit.
@@ -25,7 +25,7 @@ class PID:
         
     @staticmethod
     def abstand_und_winkel_regeln(aktueller_winkel,soll_geschwindigkeit_linear,distanz_nach_vorne_gemessen, soll_abstand):
-          """
+        """
         Berechnet lineare und Winkelgeschwindigkeit basierend auf Abstand und Winkel.
         Args:aktueller_winkel (float): Aktuell gemessener Winkel [Grad].
             soll_geschwindigkeit_linear (float): Vorgabe für die lineare Geschwindigkeit.

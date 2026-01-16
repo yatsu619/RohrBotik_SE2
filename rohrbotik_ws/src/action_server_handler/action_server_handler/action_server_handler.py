@@ -9,12 +9,13 @@ from rclpy.node import Node
 class HandlerActionServer(Node):
     def __init__(self):
         super().__init__('handler_server_node')
+        #Instanzvariablen
         self.callback_group = ReentrantCallbackGroup()
         self.done_event = threading.Event()
         self.current_goal_handle = None
-        self.handler_active = False
-        self.target_vel = 0.0
-        self.state = "IDLE"
+        self.handler_active = False     #Flag, damit bei Abbruch keine neue Action
+        #self.target_vel = 0.0
+        #self.state = "IDLE"
         self.current_cycle = 0
         self.mission_success = True
         self.end_reason = ""
@@ -39,16 +40,18 @@ class HandlerActionServer(Node):
         
         self.get_logger().info('Handler Action Server gestartet')
 
-        if not self.move_client.wait_for_server(timeout_sec = 5.0):
-            self.get_logger().warn('Move Server nicht gefunden. Starte trotzdem')
-        else:
-            self.get_logger().info('Move Server gefunden')
 
         if not self.rotate_client.wait_for_server(timeout_sec = 5.0):
             self.get_logger().warn('Rotate Server nicht gefunden. Starte trotzdem')
         else:
             self.get_logger().info('Rotate Server gefunden')
-
+        
+        if not self.move_client.wait_for_server(timeout_sec = 5.0):
+            self.get_logger().warn('Move Server nicht gefunden. Starte trotzdem')
+        else:
+            self.get_logger().info('Move Server gefunden')
+        
+        #falls kein server gefunden wird, stoppen
         
     def goal_callback(self, goal_request):
         self.get_logger().info(f'Neues Handler-Goal: target_vel={goal_request.target_vel:.2f}m/s')
@@ -66,15 +69,16 @@ class HandlerActionServer(Node):
         self.current_goal_handle = goal_handle
         self.handler_active = True
         self.done_event.clear()
-        self.target_vel = goal_handle.request.target_vel
-        self.target_vel = max(0.0, min(0.2, self.target_vel))
+        #self.target_vel = goal_handle.request.target_vel
+        #self.target_vel = max(0.0, min(0.2, self.target_vel))
 
         self.current_cycle = 0
         self.mission_success = True
         self.end_reason = ""
-        self.state = "ROTATING"
+        #self.state = "ROTATING"
 
-        self.get_logger().info(f'Handler Mission starten mit target_vel={self.target_vel:.2f}m/s')
+        self.get_logger().info(f'Handler Mission starten')
+                               
 
         self.start_rotate()
 
@@ -101,12 +105,12 @@ class HandlerActionServer(Node):
         self.get_logger().info('Starte ROTATE')
         self.send_feedback("ROTATE")
         rotate_goal = RotateAc.Goal()
-        rotate_goal.one_direction = False
+        rotate_goal.one_direction = False   #evtl. nicht nötig
 
         send_goal_future = self.rotate_client.send_goal_async(rotate_goal,
                                                                 feedback_callback=self.rotate_feedback_callback)
         
-        send_goal_future.add_done_callback(self.rotate_goal_response_callback)
+        send_goal_future.add_done_callback(self.rotate_goal_response_callback)  #wird in eine interne Liste hinzugefügt, wird aufgerufen wenn start_rotate fertig ist
 
     def rotate_goal_response_callback(self, future):
         goal_handle = future.result()
@@ -120,10 +124,8 @@ class HandlerActionServer(Node):
         
         self.get_logger().info('Rotate Goal akzeptiert')
         get_result_future = goal_handle.get_result_async()
-        get_result_future.add_done_callback(self.rotate_result_callback)
+        get_result_future.add_done_callback(self.rotate_result_callback)    
 
-    def rotate_feedback_callback(self, feedback_msg):
-        feedback = feedback_msg.feedback            #nicht nötig
 
     def rotate_result_callback(self, future):
         result = future.result().result
@@ -133,7 +135,7 @@ class HandlerActionServer(Node):
         
         if result.success:
             self.get_logger().info('Rotate erfolgreich - Rohr gefunden')
-            self.state = "MOVING"
+            #self.state = "MOVING"
             self.start_move()
         else:
             self.get_logger().error('Rotate fehlgeschlagen - Rohr nicht gefunden')
@@ -170,8 +172,6 @@ class HandlerActionServer(Node):
         get_result_future = goal_handle.get_result_async()
         get_result_future.add_done_callback(self.move_result_callback)
     
-    def move_feedback_callback(self, feedback_msg):
-        feedback = feedback_msg.feedback
     
     def move_result_callback(self, future):
         result = future.result().result
@@ -182,7 +182,7 @@ class HandlerActionServer(Node):
         if result.success:
             self.get_logger().info('Move erfolgreich abgeschlossen - Wendeplattform erreicht')
             self.current_cycle += 1
-            self.state = "ROTATING"
+            #self.state = "ROTATING"
             self.start_rotate()
         else:
             self.get_logger().error('Move fehlgeschlagen')

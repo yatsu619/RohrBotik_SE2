@@ -1,7 +1,7 @@
 import math
 
 class  RotateCL500 :# patrice idee 'CL500'
-      """Enthält Rotationsfunktionen für den Roboter.
+    """Enthält Rotationsfunktionen für den Roboter.
     Der Roboter rotiert mit einer festen Winkelgeschwindigkeit von 0.2 rad/s. Eine Rotation gilt als abgeschlossen, wenn die Winkeldifferenz kleiner als 0.01 rad ist.
     """
     _omega = 0.2 # Drehgeschwindigkeit 
@@ -33,7 +33,7 @@ class  RotateCL500 :# patrice idee 'CL500'
         
     @staticmethod
     def rotate_more(current_pose,zähler,new_angel ):
-         """
+        """
         Dreht den Roboter um 79 Grad relativ zur aktuellen Pose bis das Rohr gefunden wird .
         Die Primzahl 79 sorgt dafür, dass unterschiedliche Blickrichtungen
         abgedeckt werden und das Rohr zuverlässig gefunden wird.
@@ -58,7 +58,7 @@ class  RotateCL500 :# patrice idee 'CL500'
     @staticmethod
     def rotate_to_marker(current_pose, marker_winkel_relativ):
 
-       """
+        """
         Dreht den Roboter direkt zu einem erkannten Marker.Der Markerwinkel wird relativ zur aktuellen Roboterpose angegeben"""
           # wird nie aufgerufen is dead code ges Funktion gedacht für genauere Positionierung 
         #Berechne Zielwinkel: aktuelle Pose + relativer Markerwinkel

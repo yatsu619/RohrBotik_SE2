@@ -99,11 +99,6 @@ class RotateActionServer(Node):
         self.inner_counter = 0
         self.gesetzter_wki = 0.0
 
-    
-
-        #self.get_logger().info(f'Starte Rotation: Start-Winkel ={self.rotation_start_winkel:.2f} rad,'
-                           #    f'one_direction={self.one_direction}')
-
         self.done_event.wait()
 
         result = RotateAc.Result()

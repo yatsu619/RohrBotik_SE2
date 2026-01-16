@@ -37,6 +37,19 @@ def generate_launch_description():
             )
         ]
     )
+
+    velocity_pub_delayed = TimerAction(
+        period=1.0,
+        actions=[
+            Node(
+                package='velocity_pub',
+                executable='velocity_pub',
+                name='velocity_pub',
+                parameters=[{'velocity': target_vel}],
+                output='screen'
+            )
+        ]
+    )
     
     # 4. Rotate Server (nach 2s)
     rotate_node_delayed = TimerAction(
@@ -112,6 +125,7 @@ def generate_launch_description():
         target_vel_arg,      
         camera_node,              # 0s
         subpub_node_delayed,      # 1s
+        velocity_pub_delayed,     # 1s
         rotate_node_delayed,      # 2s
         move_node_delayed,        # 3s
         handler_node_delayed,     # 4s

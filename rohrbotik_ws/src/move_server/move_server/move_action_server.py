@@ -19,6 +19,7 @@ class MoveActionServer(Node):
         self.current_goal_handle = None
         self.move_active = False
         self.target_vel = 0.0
+        self.geschwindigkeit_empfangen = False
         self.marker_found = False
         self.marker_puffer=0 
         self.marker_distanz = 0.0
@@ -46,6 +47,12 @@ class MoveActionServer(Node):
                                                     self.marker_callback,
                                                     10,
                                                     callback_group = self.callback_group)
+        
+        self.geschwindigkeit_sub = self.create_subscription(Float32,
+                                                            'Geschwindigkeit',
+                                                            self.geschwindigkeit_callback,
+                                                            5,
+                                                            callback_group = self.callback_group)
         
         self.abstand_sub = self.create_subscription(Float32, 
                                                     'Distanz_poti',
@@ -78,6 +85,14 @@ class MoveActionServer(Node):
         if self.marker_found== True:
              self.marker_puffer= 0 
     
+    def geschwindigkeit_callback(self, msg: Float32):
+        '''Empfängt Soll-Geschwindigkeit vom Topic /Geschwindigkeit'''
+        rohe_geschwindigkeit = msg.data
+        self.target_vel = max(0.0, min(0.2, rohe_geschwindigkeit))
+        self.geschwindigkeit_empfangen = True
+        self.get_logger().info(f'Neue Soll-Geschwindigkeit: {rohe_geschwindigkeit:.3f}m/s' f' begrenzt auf {self.target_vel:.3f}m/s')
+
+    
     def abstand_callback(self, msg: Float32):
         '''Empfängt Soll-Abstand vom Topic /Abstand'''
         self.abstand_topic_empfangen = True
@@ -91,8 +106,8 @@ class MoveActionServer(Node):
         self.move_active = True
         self.done_event.clear()  #setzt das event zurück für den neuen durchlauf
 
-        self.target_vel = goal_handle.request.target_vel
-        self.target_vel = max(0.0, min(0.2, self.target_vel))
+        if not self.geschwindigkeit_empfangen:
+            self.get_logger().warn(f'Keine Geschwindigkeit empfangen! Nutze Default: {self.target_vel:.2f} m/s')
 
         self.get_logger().info(f'Linearfahrt starten mit {self.target_vel} m/s')
 
@@ -147,6 +162,9 @@ class MoveActionServer(Node):
             self.stop_motion()
             self.get_logger().info(f'Keine Sicht,Keine Fahrt ')
         
+        if not self.geschwindigkeit_empfangen:
+            self.get_logger().warn('Keine Geschwindigkeit empfangen! Nutze Default 0.0 m/s')
+
         if not self.abstand_topic_empfangen:
             self.get_logger().info('Nutze Default-Abstand 0.5m (kein Topic empfangen)')
             
