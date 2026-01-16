@@ -1,6 +1,6 @@
 import rclpy 
 from rclpy.node import Node
-from geometry_msgs.msg import Float32
+from std_msgs.msg import Float32
 
 class VelocityPublisher(Node):
     '''
@@ -21,7 +21,7 @@ class VelocityPublisher(Node):
         #Parameter für die Geschwindigkeit (Default)
         self.declare_parameter('velocity', 0.0)
 
-        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.timer = self.create_timer(0.1, self.timer_callback)
         
     def timer_callback(self):
         geschwindigkeit = self.get_parameter('velocity').value
