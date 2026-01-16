@@ -31,7 +31,7 @@ class VelocityPublisher(Node):
         msg.data = geschwindigkeit
         self.publisher.publish(msg)
 
-def clamp_velocity(value, logger=None, min_val=0.0, max_val=2.0):
+def clamp_velocity(value, logger=None, min_val=0.0, max_val=0.2):
     """
     Begrenzt die Geschwindigkeit auf erlaubten Bereich.
     Loggt eine Warnung wenn der Wert korrigiert wurde.

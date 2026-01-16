@@ -87,19 +87,14 @@ class MoveActionServer(Node):
     
     def geschwindigkeit_callback(self, msg: Float32):
         '''Empfängt Soll-Geschwindigkeit vom Topic /Geschwindigkeit'''
-        rohe_geschwindigkeit = msg.data
-        self.target_vel = max(0.0, min(0.2, rohe_geschwindigkeit))
+        self.target_vel = msg.data
         self.geschwindigkeit_empfangen = True
-        self.get_logger().info(f'Neue Soll-Geschwindigkeit: {rohe_geschwindigkeit:.3f}m/s' f' begrenzt auf {self.target_vel:.3f}m/s')
-
     
     def abstand_callback(self, msg: Float32):
         '''Empfängt Soll-Abstand vom Topic /Abstand'''
         self.abstand_topic_empfangen = True
         self.soll_abstand = msg.data
-        self.get_logger().info(f'Neuer Soll-Abstand: {self.soll_abstand:.2f}m (empfangen: {msg.data:.2f}m)')
     
-
 
     def execute_callback(self, goal_handle):            #goal_handle hat das goal und die Methoden für feedback und result
         self.current_goal_handle = goal_handle          #speichert goal_handle in eine Instanzvariable 
