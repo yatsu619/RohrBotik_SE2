@@ -3,8 +3,10 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 #für eine bestimmte Reinfolge:
 from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess, TimerAction
-from launch.event_handlers import OnProcessStart
+from launch.event_handlers import OnProcessStart, OnShutdown
 from launch.substitutions import LaunchConfiguration
+import signal
+import subprocess
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -46,6 +48,19 @@ def generate_launch_description():
                 executable='velocity_pub',
                 name='velocity_pub',
                 parameters=[{'velocity': target_vel}],
+                output='screen'
+            )
+        ]
+    )
+
+     #8. distance_poti(nach 8s)
+    activate_poti = TimerAction(
+        period=1.0,
+        actions=[
+            Node(
+                package='distance_pub',
+                executable='distance_pub',
+                name='distance_pub',
                 output='screen'
             )
         ]
@@ -97,28 +112,13 @@ def generate_launch_description():
             ExecuteProcess(
                 cmd=[
                     'bash', '-c',
-                    ['ros2 action send_goal /handler interfaces/action/HandlerAc "{target_vel: ', 
-                     target_vel,
-                     '}"']
-                ],
+                    'ros2 action send_goal /handler interfaces/action/HandlerAc "{}"'],
                 output='screen',
                 
             )
         ]
     )
 
-    #8. distance_poti(nach 8s)
-    activate_poti = TimerAction(
-        period=11.0,
-        actions=[
-            Node(
-                package='distance_pub',
-                executable='distance_pub',
-                name='distance_pub',
-                output='screen'
-            )
-        ]
-    )
     
 
     return LaunchDescription([
@@ -126,9 +126,9 @@ def generate_launch_description():
         camera_node,              # 0s
         subpub_node_delayed,      # 1s
         velocity_pub_delayed,     # 1s
+        activate_poti,            # 1s
         rotate_node_delayed,      # 2s
         move_node_delayed,        # 3s
         handler_node_delayed,     # 4s
         start_mission,            # 7s
-        activate_poti,            # 8s
     ])

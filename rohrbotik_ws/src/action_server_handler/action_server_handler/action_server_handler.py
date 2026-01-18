@@ -1,5 +1,5 @@
 from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.executors import MultiThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor, ExternalShutdownException
 import threading
 import rclpy
 from interfaces.action import HandlerAc, RotateAc, MoveAc
@@ -54,7 +54,7 @@ class HandlerActionServer(Node):
         #falls kein server gefunden wird, stoppen
         
     def goal_callback(self, goal_request):
-        self.get_logger().info(f'Neues Handler-Goal: target_vel={goal_request.target_vel:.2f}m/s')
+        self.get_logger().info(f'Neues Handler-Goal empfangen')
         return GoalResponse.ACCEPT
         
     def cancel_callback(self, goal_handle):
@@ -105,10 +105,8 @@ class HandlerActionServer(Node):
         self.get_logger().info('Starte ROTATE')
         self.send_feedback("ROTATE")
         rotate_goal = RotateAc.Goal()
-        rotate_goal.one_direction = False   #evtl. nicht nötig
 
-        send_goal_future = self.rotate_client.send_goal_async(rotate_goal,
-                                                                feedback_callback=self.rotate_feedback_callback)
+        send_goal_future = self.rotate_client.send_goal_async(rotate_goal)
         
         send_goal_future.add_done_callback(self.rotate_goal_response_callback)  #wird in eine interne Liste hinzugefügt, wird aufgerufen wenn start_rotate fertig ist
 
@@ -151,10 +149,9 @@ class HandlerActionServer(Node):
         self.send_feedback("MOVE")
 
         move_goal = MoveAc.Goal()
-        move_goal.target_vel = self.target_vel
+        #move_goal.target_vel = self.target_vel
 
-        send_goal_future = self.move_client.send_goal_async(move_goal,
-                                                            feedback_callback=self.move_feedback_callback)
+        send_goal_future = self.move_client.send_goal_async(move_goal)
         
         send_goal_future.add_done_callback(self.move_goal_response_callback)
 
@@ -208,7 +205,7 @@ def main(args=None):
 
     try:
         executor.spin()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         node.get_logger().info('Handler Action Server wird heruntergefahren (KeyboardInterrupt)')
     finally:
         node.destroy_node()

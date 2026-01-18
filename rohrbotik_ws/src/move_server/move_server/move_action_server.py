@@ -6,7 +6,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
 from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.executors import MultiThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor, ExternalShutdownException
 from cam_msgs.msg import MarkerInfo
 import threading
 
@@ -64,7 +64,7 @@ class MoveActionServer(Node):
 
 
     def goal_callback(self, goal_request):
-        self.get_logger().info(f'Neues Move-Ziel: {goal_request.target_vel}')
+        self.get_logger().info(f'Neues Move-Ziel empfangen')
         return GoalResponse.ACCEPT
             
     def cancel_callback(self, goal_handle):
@@ -188,13 +188,21 @@ def main(args = None):
     executor.add_node(node)                 #fügt den move action server dem executor hinzu
 
     try:
+        # Node laufen lassen - blockiert hier bis Ctrl+C gedrückt wird
         executor.spin()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
+        # Wenn Benutzer Ctrl+C drückt
         node.get_logger().info('Server unterbrochen')
         node.stop_motion()
+    except Exception as e:
+        # Falls irgendein anderer Fehler auftritt
+        node.get_logger().error(f'Unerwarteter Fehler: {e}')
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        node.get_logger().info('Server wird beendet...')
+        #node.stop_motion()  # Roboter stoppen
+        node.destroy_node()  
+        rclpy.shutdown() 
+
 
 if __name__ == '__main__':
     main()

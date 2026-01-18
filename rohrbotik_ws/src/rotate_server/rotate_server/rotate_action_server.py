@@ -5,7 +5,7 @@ from rclpy.action import ActionServer, GoalResponse, CancelResponse
 from rclpy.node import Node
 from geometry_msgs.msg import Pose2D, Twist
 from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.executors import MultiThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor, ExternalShutdownException
 from cam_msgs.msg import MarkerInfo
 import threading
 
@@ -28,8 +28,6 @@ class RotateActionServer(Node):
         self.marker_distanz = 0.0
         self.marker_winkel = 0.0
         self.marker_id = 0
-    
-        self.one_direction = False
         self.marker_gefunden = False
         self.rotation_active = False
 
@@ -93,7 +91,6 @@ class RotateActionServer(Node):
         self.current_goal_handle = goal_handle
         self.rotation_active = True
         self.done_event.clear()
-        self.one_direction = goal_handle.request.one_direction
 
         self.count = 0
         self.inner_counter = 0
@@ -185,18 +182,19 @@ def main(args=None):
     try:
         # Node laufen lassen - blockiert hier bis Ctrl+C gedrückt wird
         executor.spin()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         # Wenn Benutzer Ctrl+C drückt
         node.get_logger().info('Server unterbrochen')
         node.stop_motion()
     except Exception as e:
         # Falls irgendein anderer Fehler auftritt
         node.get_logger().error(f'Unerwarteter Fehler: {e}')
-        node.stop_motion()
     finally:
         node.get_logger().info('Server wird beendet...')
+        #node.stop_motion()  # Roboter stoppen
         node.destroy_node()  
         rclpy.shutdown() 
+
 
 if __name__ == '__main__':
     main()

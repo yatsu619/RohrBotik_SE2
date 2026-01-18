@@ -13,7 +13,7 @@ class Distance(Node):
 
     Befehl zur Änderung im Terminal:
     > ros2 param set /distance_publisher target_distance 0.8
-    > "ros2 param set /distance_publisher poti 0.8" [einer von den beiden]
+    > "ros2 param set /distance poti 0.8" [einer von den beiden]
 
     '''
     def __init__(self):

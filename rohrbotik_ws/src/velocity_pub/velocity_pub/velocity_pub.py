@@ -22,6 +22,8 @@ class VelocityPublisher(Node):
         self.declare_parameter('velocity', 0.0)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
+
+        self.get_logger().info('Velocity Publisher gestartet')
         
     def timer_callback(self):
         geschwindigkeit = self.get_parameter('velocity').value
