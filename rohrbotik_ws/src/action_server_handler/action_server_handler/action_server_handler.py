@@ -6,7 +6,24 @@ from interfaces.action import HandlerAc, RotateAc, MoveAc
 from rclpy.action import ActionServer, ActionClient, GoalResponse, CancelResponse
 from rclpy.node import Node
 
+'''
+Handler Server koordiniert Rotate und Move Server über Future-basierte asynchrone Kommunikation.
+Aufbau ähnlich wie Rotate und Move Server (gleiche Threading-Logik und
+Event-Synchronisation). Hauptunterschied: Kein eigener Timer, Steuerung erfolgt
+über Callback-Kette zwischen Rotate und Move.
+'''
+
 class HandlerActionServer(Node):
+    '''
+    Zentrale Koordinationskomponente der Navigation.
+
+    Unterschiede zu Rotate und Move Server:
+        - Fungiert gleichzeitig als Action Server (empfängt Handler Goal)
+          und als Action Client (sendet Goals an Rotate und Move)
+        - Keine Timer-basierte Kontrollfunktion, Ablauf wird über Future-Callbacks gesteuert
+        - Callback-Kette: Rotate fertig → Move starten → Move fertig → Rotate starten
+        - Wartet beim Start auf Verfügbarkeit von Rotate und Move Server
+    '''
     def __init__(self):
         super().__init__('handler_server_node')
         #Instanzvariablen
@@ -41,23 +58,23 @@ class HandlerActionServer(Node):
         self.get_logger().info('Handler Action Server gestartet')
 
 
-        if not self.rotate_client.wait_for_server(timeout_sec = 5.0):
-            self.get_logger().warn('Rotate Server nicht gefunden. Starte trotzdem')
+        if not self.rotate_client.wait_for_server(timeout_sec = 10.0):
+            self.get_logger().warn('Rotate Server nicht gefunden. Handler wird beendet')
+            return
         else:
             self.get_logger().info('Rotate Server gefunden')
         
-        if not self.move_client.wait_for_server(timeout_sec = 5.0):
-            self.get_logger().warn('Move Server nicht gefunden. Starte trotzdem')
+        if not self.move_client.wait_for_server(timeout_sec = 10.0):
+            self.get_logger().warn('Move Server nicht gefunden. Handler wird beendet')
+            return
         else:
             self.get_logger().info('Move Server gefunden')
-        
-        #falls kein server gefunden wird, stoppen
-        
-    def goal_callback(self, goal_request):
+                
+    def goal_callback(self):
         self.get_logger().info(f'Neues Handler-Goal empfangen')
         return GoalResponse.ACCEPT
         
-    def cancel_callback(self, goal_handle):
+    def cancel_callback(self):
         self.get_logger().info('Handler Abbruch angefragt')
         self.handler_active = False
         self.mission_success = True # Abbruch ist kein Fehler
@@ -69,13 +86,10 @@ class HandlerActionServer(Node):
         self.current_goal_handle = goal_handle
         self.handler_active = True
         self.done_event.clear()
-        #self.target_vel = goal_handle.request.target_vel
-        #self.target_vel = max(0.0, min(0.2, self.target_vel))
 
         self.current_cycle = 0
         self.mission_success = True
         self.end_reason = ""
-        #self.state = "ROTATING"
 
         self.get_logger().info(f'Handler Mission starten')
                                
@@ -98,7 +112,14 @@ class HandlerActionServer(Node):
         self.current_goal_handle = None
         return result
     
-    def start_rotate(self):         #startet rotate action server
+    def start_rotate(self):
+        '''
+        Sendet ein Goal an den Rotate Server.
+
+        Nutzt send_goal_async um das Goal asynchron zu senden.
+        Registriert rotate_goal_response_callback auf dem Future,
+        dieser wird automatisch aufgerufen wenn das Goal akzeptiert wird.
+        '''
         if not self.handler_active:
             return
         
@@ -111,6 +132,15 @@ class HandlerActionServer(Node):
         send_goal_future.add_done_callback(self.rotate_goal_response_callback)  #wird in eine interne Liste hinzugefügt, wird aufgerufen wenn start_rotate fertig ist
 
     def rotate_goal_response_callback(self, future):
+        '''
+        Wird aufgerufen wenn Rotate Server auf das Goal reagiert.
+
+        Prüft ob das Goal akzeptiert wurde. Bei Akzeptanz wird
+        get_result_async aufgerufen und rotate_result_callback registriert,
+        dieser wird aufgerufen wenn die Rotation abgeschlossen ist.
+
+        future: Future von send_goal_async mit dem GoalHandle als Ergebnis
+        '''
         goal_handle = future.result()
 
         if not goal_handle.accepted:
@@ -126,6 +156,14 @@ class HandlerActionServer(Node):
 
 
     def rotate_result_callback(self, future):
+        '''
+        Wird aufgerufen wenn Rotation abgeschlossen ist.
+
+        Bei Erfolg wird start_move() aufgerufen, die Callback-Kette geht weiter.
+        Bei Fehler wird die Mission beendet.
+
+        future: Future von get_result_async mit dem Rotate Ergebnis
+        '''
         result = future.result().result
 
         if not self.handler_active:
@@ -142,6 +180,12 @@ class HandlerActionServer(Node):
             self.done_event.set()
 
     def start_move(self):
+        '''
+        Sendet ein Goal an den Move Server.
+
+        Gleiche Struktur wie start_rotate, sendet Goal asynchron und
+        registriert move_goal_response_callback auf dem Future.
+        '''
         if not self.handler_active:
             return
         
@@ -156,6 +200,13 @@ class HandlerActionServer(Node):
         send_goal_future.add_done_callback(self.move_goal_response_callback)
 
     def move_goal_response_callback(self, future):
+        '''
+        Gleiche Struktur wie rotate_goal_response_callback.
+
+        Prüft Akzeptanz und registriert move_result_callback für das Ergebnis.
+
+        future: Future von send_goal_async mit dem GoalHandle als Ergebnis
+        '''
         goal_handle = future.result()
 
         if not goal_handle.accepted:
@@ -171,6 +222,15 @@ class HandlerActionServer(Node):
     
     
     def move_result_callback(self, future):
+        '''
+        Wird aufgerufen wenn Fahrt abgeschlossen ist.
+
+        Bei Erfolg wird der Zyklus-Zähler erhöht und start_rotate() aufgerufen –
+        damit schließt sich die Callback-Kette wieder.
+        Bei Fehler wird die Mission beendet.
+
+        future: Future von get_result_async mit dem Move Ergebnis
+        '''
         result = future.result().result
 
         if not self.handler_active:
@@ -188,6 +248,10 @@ class HandlerActionServer(Node):
             self.done_event.set()
         
     def send_feedback(self, state):
+        '''
+        Sendet aktuelle Phase als Feedback an den Client.
+        state: Aktuelle Phase als String ("ROTATE" oder "MOVE")
+        '''
         if self.current_goal_handle is None:
             return
         

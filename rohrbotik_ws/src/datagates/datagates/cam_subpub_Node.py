@@ -46,7 +46,7 @@ class Camera_data(Node):
             10
         )
 
-        self.get_logger().info("SupPubNode gestartet")
+        #self.get_logger().info("SupPubNode gestartet")
 
         
     def frame_callback(self, msg):
@@ -85,7 +85,7 @@ class Camera_data(Node):
         
         self.camera_data_publish.publish(msg_out)
 
-        self.get_logger().info(f'ArUco gefunden: {marker_found} ID: {marker_id}, distanz: {marker_distanz: .2f}, Winkel: {marker_winkel: .2f}°')
+        #self.get_logger().info(f'ArUco gefunden: {marker_found} ID: {marker_id}, distanz: {marker_distanz: .2f}, Winkel: {marker_winkel: .2f}°')
 
 
 

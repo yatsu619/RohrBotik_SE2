@@ -2,15 +2,39 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 #für eine bestimmte Reinfolge:
-from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess, TimerAction
-from launch.event_handlers import OnProcessStart, OnShutdown
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.substitutions import LaunchConfiguration
-import signal
-import subprocess
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+'''
+Launch File für das gesamte RohrBotik System.
+
+Startet alle Nodes in einer gestaffelten Reihenfolge mit TimerAction.
+Dies verhindert Race Conditions, jede Node hat Zeit sich zu initialisieren
+bevor die nächste gestartet wird.
+
+Startreihenfolge:
+    t=0s Kamera Node (cam_data_pub)
+    t=1s Bildverarbeitung (cam_subpub), Geschwindigkeit (velocity_pub), Distanz (distance_pub)
+    t=2s Rotate Server
+    t=3s Move Server
+    t=4s Handler Server (braucht Rotate und Move)
+    t=6s Mission Start (Handler Goal senden)
+'''
 
 def generate_launch_description():
+    '''
+    Erstellt die Launch Description mit allen Nodes und deren Startreihenfolge.
+
+    Launch Argument:
+        target_vel: Startgeschwindigkeit für die Linearfahrt in m/s (Standard: 0.12)
+                    Wird an velocity_pub als Parameter übergeben.
+                    Während der Fahrt kann die Geschwindigkeit mit
+                    'ros2 param set /velocity_pub velocity <wert>' geändert werden.
+
+    Returns:
+        LaunchDescription: Enthält alle Nodes und TimerActions in der richtigen Reihenfolge
+    '''
     
     target_vel_arg = DeclareLaunchArgument(             #Parameter wird deklariert, damit der user diesen beim Starten des Launchfiles setzen kann
         'target_vel',
@@ -53,7 +77,6 @@ def generate_launch_description():
         ]
     )
 
-     #8. distance_poti(nach 8s)
     activate_poti = TimerAction(
         period=1.0,
         actions=[
@@ -66,7 +89,6 @@ def generate_launch_description():
         ]
     )
     
-    # 4. Rotate Server (nach 2s)
     rotate_node_delayed = TimerAction(
         period=2.0,
         actions=[
@@ -79,7 +101,6 @@ def generate_launch_description():
         ]
     )
     
-    # 5. Move Server (nach 3s)
     move_node_delayed = TimerAction(
         period=3.0,
         actions=[
@@ -92,7 +113,6 @@ def generate_launch_description():
         ]
     )
     
-    # 6. Handler Server (nach 4s)
     handler_node_delayed = TimerAction(
         period=4.0,
         actions=[
@@ -105,9 +125,8 @@ def generate_launch_description():
         ]
     )
     
-    # 7. Action Goal (nach 7s)
     start_mission = TimerAction(
-        period=10.0,
+        period=6.0,
         actions=[
             ExecuteProcess(
                 cmd=[
@@ -130,5 +149,5 @@ def generate_launch_description():
         rotate_node_delayed,      # 2s
         move_node_delayed,        # 3s
         handler_node_delayed,     # 4s
-        start_mission,            # 7s
+        start_mission,            # 6s
     ])

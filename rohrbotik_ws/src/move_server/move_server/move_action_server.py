@@ -12,6 +12,12 @@ import threading
 
 class MoveActionServer(Node):
     def __init__(self):
+        '''
+        Zusätzlich zum Rotate Server vorhanden:
+            - Subscriber für Geschwindigkeit (/Geschwindigkeit)
+            - Subscriber für Abstand zum vorausfahrenden Bot (/Distanz_poti)
+            - Marker-Puffer zur Verlustbehandlung
+        '''
         super().__init__('move_server_node')
         '''für Multi-Threading: control-step und execute callback können gleichzeitig laufen'''
         self.callback_group = ReentrantCallbackGroup()  
@@ -48,33 +54,49 @@ class MoveActionServer(Node):
                                                     10,
                                                     callback_group = self.callback_group)
         
+        '''Subscriber für Soll-Geschwindigkeit'''
         self.geschwindigkeit_sub = self.create_subscription(Float32,
                                                             'Geschwindigkeit',
                                                             self.geschwindigkeit_callback,
                                                             5,
                                                             callback_group = self.callback_group)
         
+        '''Subscriber für Soll-Abstand zum vorausfahrenden Bot'''
         self.abstand_sub = self.create_subscription(Float32, 
                                                     'Distanz_poti',
                                                     self.abstand_callback,
                                                     5,
                                                     callback_group = self.callback_group)
         
-        self.get_logger().info('Move Action Server wurde gestartet')
+        #self.get_logger().info('Move Action Server wurde gestartet')
 
 
     def goal_callback(self, goal_request):
-        self.get_logger().info(f'Neues Move-Ziel empfangen')
+        #self.get_logger().info(f'Neues Move-Ziel empfangen')
         return GoalResponse.ACCEPT
             
     def cancel_callback(self, goal_handle):
-        self.get_logger().info('Move Abbruch angefragt')
+        #self.get_logger().info('Move Abbruch angefragt')
         self.move_active = False
         self.stop_motion()
         self.done_event.set()   #beendet execute callback
         return CancelResponse.ACCEPT
             
     def marker_callback(self, msg: MarkerInfo):
+        '''
+        Empfängt und speichert Marker-Informationen von der Kamera.
+
+        Verwaltet auch den Marker-Puffer: Bei Marker-Verlust wird ein
+        Zähler erhöht. Bei erneuter Erkennung wird der Zähler zurückgesetzt.
+        Der Puffer verhindert dass der Roboter bei kurzen Detektionsausfällen
+        sofort stoppt.
+
+        msg: MarkerInfo Message mit Marker-Daten
+            - marker_found: Boolean ob Marker erkannt wurde
+            - marker_distanz: Distanz zum Marker in Metern
+            - marker_winkel: Winkel zum Marker in Grad
+            - marker_id: ID des erkannten Markers
+        '''
         self.marker_found = msg.marker_found
         self.marker_distanz = msg.marker_distanz
         self.marker_winkel = msg.marker_winkel
@@ -104,19 +126,25 @@ class MoveActionServer(Node):
         if not self.geschwindigkeit_empfangen:
             self.get_logger().warn(f'Keine Geschwindigkeit empfangen! Nutze Default: {self.target_vel:.2f} m/s')
 
-        self.get_logger().info(f'Linearfahrt starten mit {self.target_vel} m/s')
+        #self.get_logger().info(f'Linearfahrt starten mit {self.target_vel} m/s')
 
         self.done_event.wait()  #warten auf event, welches im control-step gesetzt wird
 
         result = MoveAc.Result()
         result.success = True
         goal_handle.succeed()
-        self.get_logger().info('Move abgeschlossen')
+        #self.get_logger().info('Move abgeschlossen')
         self.current_goal_handle = None         #löscht das aktuelle goal_handle damit control_step weiß, dass keine action läuft
         return result
     
     def control_step(self):
-        '''Timer-Callback, welches alle 0,1s aufgerufen wird (10Hz)'''
+        '''
+        Timer-Callback, welches alle 0,1s aufgerufen wird (10Hz)
+        Prüft den aktuellen Zustand und steuert die Fahrt über PID-Regelung.
+        Unterscheidet zwei Betriebsmodi:
+            - Marker 0: Zentrale Rohrnavigation mit zur_mitte_regeln
+            - Marker 69: Folgefahrt zum vorausfahrenden Bot mit abstand_und_winkel_regeln
+        '''
 
         linear_vel = 0.0
         angular_vel = 0.0
@@ -128,34 +156,34 @@ class MoveActionServer(Node):
               self.move_active = False
               self.stop_motion()
               self.done_event.set()
-              self.get_logger().info('Move abgebrochen')
+              #self.get_logger().info('Move abgebrochen')
               return
         
         
-         
+        '''wenn Abstand 0.45m von Marker 0 ist, stoppe Bot'''
         MARKER_STOPP_DISTANZ = 0.45  
 
         if self.marker_found and self.marker_id == 0 and self.marker_distanz < MARKER_STOPP_DISTANZ:
               self.move_active = False
               self.stop_motion()
-              self.get_logger().info(f'Marker erreicht')
+              #self.get_logger().info(f'Marker erreicht')
               self.done_event.set() #Event setzen, um execute callback zu beenden
               return
         if self.marker_found== True :
-            self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°')          #Test log
+            #self.get_logger().info(f'VOR PID: self.marker_winkel = {self.marker_winkel:.2f}°')          #Test log
             '''Aufruf des Reglers'''
             if self.marker_id==69:
                 linear_vel,angular_vel = PID.abstand_und_winkel_regeln(self.marker_winkel,self.target_vel,self.marker_distanz, self.soll_abstand)
-                self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
+                #self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
 
             else:
                 linear_vel, angular_vel = PID.zur_mitte_regeln(self.marker_winkel, self.target_vel)     
-                self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
+                #self.get_logger().info(f'PID: winkel = {self.marker_winkel:.2f}°, linear = {linear_vel:.3f}, angular = {angular_vel:.3f}') 
 
         elif self.marker_found== False and self.marker_puffer >=12 :
             """ Wir prüfen ob wir den marker sehen und wenn nicht warten wir bis wir ihn 12 mal nicht sehen bevor wir stehen bleiben bei 24Hz entspricht 12 einer halben sekunde """
             self.stop_motion()
-            self.get_logger().info(f'Keine Sicht,Keine Fahrt ')
+            self.get_logger().info(f'Hindernis, Keine Fahrt ')
         
         if not self.geschwindigkeit_empfangen:
             self.get_logger().warn('Keine Geschwindigkeit empfangen! Nutze Default 0.0 m/s')
